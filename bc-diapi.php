@@ -136,108 +136,29 @@ class BCDIAPI
 
 		switch($call)
 		{
-			case 'allvideos':
+			case 's3urls':
 				$method = 'find_all_videos';
 				$get_item_count = TRUE;
 				break;
-			case 'videobyid':
+			case 'putVideo':
 				$method = 'find_video_by_id';
 				$default = 'video_id';
 				$get_item_count = FALSE;
 				break;
-			case 'videobyidunfiltered':
+			case 'createVideo':
 				$method = 'find_video_by_id_unfiltered';
 				$default = 'video_id';
 				$get_item_count = FALSE;
 				break;
-			case 'videosbyids':
+			case 'ingestVideo':
 				$method = 'find_videos_by_ids';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
 				break;
-			case 'videosbyidsunfiltered':
+			case 'getStatus':
 				$method = 'find_videos_by_ids_unfiltered';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
-				break;
-			case 'videobyreferenceid':
-				$method = 'find_video_by_reference_id';
-				$default = 'reference_id';
-				$get_item_count = FALSE;
-				break;
-			case 'videobyreferenceidunfiltered':
-				$method = 'find_video_by_reference_id_unfiltered';
-				$default = 'reference_id';
-				$get_item_count = FALSE;
-				break;
-			case 'videosbyreferenceids':
-				$method = 'find_videos_by_reference_ids';
-				$default = 'reference_ids';
-				$get_item_count = FALSE;
-				break;
-			case 'videosbyreferenceidsunfiltered':
-				$method = 'find_videos_by_reference_ids_unfiltered';
-				$default = 'reference_ids';
-				$get_item_count = FALSE;
-				break;
-			case 'videosbycampaignid':
-				$method = 'find_videos_by_campaign_id';
-				$default = 'campaign_id';
-				$get_item_count = TRUE;
-				break;
-			case 'videosbytags':
-				$method = 'find_videos_by_tags';
-				$default = 'or_tags';
-				$get_item_count = TRUE;
-				break;
-			case 'videosbytext':
-				$method = 'find_videos_by_text';
-				$default = 'text';
-				$get_item_count = TRUE;
-				break;
-			case 'videosbyuserid':
-				$method = 'find_videos_by_user_id';
-				$default = 'user_id';
-				$get_item_count = TRUE;
-				break;
-			case 'modifiedvideos':
-				$method = 'find_modified_videos';
-				$default = 'from_date';
-				$get_item_count = TRUE;
-				break;
-			case 'relatedvideos':
-				$method = 'find_related_videos';
-				$default = 'video_id';
-				$get_item_count = TRUE;
-				break;
-			case 'allplaylists':
-				$method = 'find_all_playlists';
-				$get_item_count = TRUE;
-				break;
-			case 'playlistbyid':
-				$method = 'find_playlist_by_id';
-				$default = 'playlist_id';
-				$get_item_count = FALSE;
-				break;
-			case 'playlistsbyids':
-				$method = 'find_playlists_by_ids';
-				$default = 'playlist_ids';
-				$get_item_count = FALSE;
-				break;
-			case 'playlistbyreferenceid':
-				$method = 'find_playlist_by_reference_id';
-				$default = 'reference_id';
-				$get_item_count = FALSE;
-				break;
-			case 'playlistsbyreferenceids':
-				$method = 'find_playlists_by_reference_ids';
-				$default = 'reference_ids';
-				$get_item_count = FALSE;
-				break;
-			case 'playlistsforplayerid':
-				$method = 'find_playlists_for_player_id';
-				$default = 'player_id';
-				$get_item_count = TRUE;
 				break;
 			default:
 				throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_METHOD);
@@ -257,25 +178,6 @@ class BCDIAPI
 			}
 		}
 
-		if(isset($params['from_date']))
-		{
-			$params['from_date'] = (string)$params['from_date'];
-
-			if(strlen($params['from_date']) > 9)
-			{
-				$params['from_date'] = floor((int)$params['from_date'] / 60);
-			}
-		}
-
-		if(!isset($params['get_item_count']) && $get_item_count)
-		{
-			$params['get_item_count'] = 'TRUE';
-		}
-
-		if(!isset($params['media_delivery']) && $this->media_delivery != 'default')
-		{
-			$params['media_delivery'] = $this->media_delivery;
-		}
 
 		$url = $this->appendParams($method, $params);
 
@@ -284,140 +186,6 @@ class BCDIAPI
 		return $this->getData($url);
 	}
 
-	/**
-	 * Finds all media assets in account, ignoring pagination.
-	 * @access Public
-	 * @since 0.3.6
-	 * @param string [$type] The type of object to retrieve
-	 * @param array [$params] A key-value array of API parameters
-	 * @return object An object containing all API return data
-	 */
-	public function findAll($type = 'video', $params = NULL)
-	{
-		$this->timeout_current = 0;
-
-		$this->validType($type);
-
-		if(!isset($params))
-		{
-			$params = array();
-		}
-
-		$params['get_item_count'] = 'TRUE';
-		$params['page_number'] = 0;
-
-		if(!isset($params['page_size']) || $params['page_size'] > 100)
-		{
-			$params['page_size'] = 100;
-		}
-
-		if(!isset($params['media_delivery']) && $this->media_delivery != 'default')
-		{
-			$params['media_delivery'] = $this->media_delivery;
-		}
-
-		$assets = array();
-		$current_page = 0;
-		$total_count = 0;
-		$total_page = 1;
-
-		while($current_page < $total_page)
-		{
-			$params['page_number'] = $current_page;
-
-			$url = $this->appendParams(strtolower('find_all_' . $type . 's'), $params);
-
-			$result = $this->getData($url);
-
-			if($total_count < 1)
-			{
-				$total_count = $this->total_count;
-				$total_page = ceil($total_count / $params['page_size']);
-			}
-
-			if(is_array($result))
-			{
-				foreach($result as $asset)
-				{
-					$assets[] = $asset;
-				}
-			}
-
-			$current_page++;
-		}
-
-		$this->timeout_current = 0;
-
-		return $assets;
-	}
-
-	/**
-	 * Performs a search of video meta data
-	 * @access Public
-	 * @since 1.1.1
-	 * @param string [$type] The type of objects to retrieve
-	 * @param array [$terms] The terms to use for the search
-	 * @param mixed [$params] A key-value array of API parameters
-	 * @return object An object containing all API return data
-	 */
-	public function search($type = 'video', $terms = NULL, $params = NULL)
-	{
-		if(!isset($terms) || !is_array($terms))
-		{
-			throw new BCDIAPISearchTermsNotProvided($this, self::ERROR_SEARCH_TERMS_NOT_PROVIDED);
-		}
-
-		if(!isset($params))
-		{
-			$params = array();
-		} else {
-			if(!is_array($params))
-			{
-				$temp = $params;
-
-				$params = array();
-				$params[$default] = $temp;
-			}
-		}
-
-		if(!isset($params['get_item_count']))
-		{
-			$params['get_item_count'] = 'TRUE';
-		}
-
-		foreach($terms as $key => $value)
-		{
-			if(strpos($value, ',') !== FALSE)
-			{
-				$i = 0;
-				$parts = explode(',', $value);
-
-				foreach($parts as $part)
-				{
-					if($i == 0)
-					{
-						$params[$key] = $part;
-						$i++;
-					} else {
-						$params[$key] .= '%26' . $key . '%3D' . $part;
-					}
-				}
-			} else {
-				$params[$key] = $value;
-			}
-		}
-
-		if (isset($params['sort_by']) && isset($params['sort_order'])) {
-			$params['sort_by'] .= (':'.$params['sort_order']);
-			unset($params['sort_order']);
-		}
-
-		$url = str_replace(array('%2526', '%253D'), array('&', '='), $this->appendParams('search_' . $type . 's', $params));
-
-		$this->timeout_current = 0;
-
-		return $this->getData($url);
-	}
 
 	/**
 	 * Uploads a media asset file to Brightcove.
