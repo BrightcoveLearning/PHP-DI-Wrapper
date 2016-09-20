@@ -44,17 +44,17 @@ class BCDIAPI
 	const ERROR_API_ERROR = 1;
 	const ERROR_DEPRECATED = 99;
 	const ERROR_DTO_DOES_NOT_EXIST = 12;
-	const ERROR_ID_NOT_PROVIDED = 2;
+	const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
 	const ERROR_INVALID_FILE_TYPE = 5;
-	const ERROR_INVALID_METHOD = 3;
+	const ERROR_INVALID_JSON = 3;
 	const ERROR_INVALID_PROPERTY = 4;
 	const ERROR_INVALID_TYPE = 6;
 	const ERROR_INVALID_UPLOAD_OPTION = 7;
 	const ERROR_READ_API_TRANSACTION_FAILED = 8;
-	const ERROR_READ_TOKEN_NOT_PROVIDED = 9;
+	const ERROR_CLIENT_ID_NOT_PROVIDED = 9;
 	const ERROR_SEARCH_TERMS_NOT_PROVIDED = 13;
 	const ERROR_WRITE_API_TRANSACTION_FAILED = 10;
-	const ERROR_WRITE_TOKEN_NOT_PROVIDED = 11;
+	const ERROR_CLIENT_SECRET_NOT_PROVIDED = 11;
 
 
 	protected $api_calls = 0;
@@ -70,7 +70,13 @@ class BCDIAPI
 	protected $access_token = NULL;
 	protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
 	protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
+	protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
 	protected $di_suffix = '/ingest-requests';
+	protected $url = NULL;
+	protected $method = NULL;
+	protected $current_request = NULL;
+	protected $request_data = NULL;
+	protected $parsed_data = array();
 	protected $video_id = NULL;
 	protected $job_id = NULL;
 	protected $signed_url = NULL;
@@ -95,7 +101,7 @@ class BCDIAPI
 	/**
 	 * Sets a property of the BCDIAPI class.
 	 * @access Public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$key] The property to set
 	 * @param mixed [$value] The new value for the property
 	 * @return mixed The new value of the property
@@ -113,7 +119,7 @@ class BCDIAPI
 	/**
 	 * Retrieves a property of the BCDIAPI class.
 	 * @access Public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$key] The property to retrieve
 	 * @return mixed The value of the property
 	 */
@@ -135,38 +141,43 @@ class BCDIAPI
 	 * @param mixed [$params] A key-value array of API parameters, or a single value that matches the default
 	 * @return object An object containing all API return data
 	 */
-	public function submit($call, $params = NULL)
+	public function submit($call, $request_data = NULL)
 	{
 		$call = strtolower(preg_replace('/(?:find|_)+/i', '', $call));
 
 		switch($call)
 		{
+			case 'gettoken':
+				$url = $url_oauth;
+				$method = 'POST';
+				$get_item_count = FALSE;
+				break;
+			case 'createvideo':
+				$url = $url_cms . $account_id . '/videos';
+				$method = 'POST';
+				$get_item_count = FALSE;
+				break;
 			case 's3urls':
 				$method = 'find_all_videos';
 				$get_item_count = TRUE;
 				break;
-			case 'putVideo':
+			case 'putvideo':
 				$method = 'find_video_by_id';
 				$default = 'video_id';
 				$get_item_count = FALSE;
 				break;
-			case 'createVideo':
-				$method = 'find_video_by_id_unfiltered';
-				$default = 'video_id';
-				$get_item_count = FALSE;
-				break;
-			case 'ingestVideo':
+			case 'ingestvideo':
 				$method = 'find_videos_by_ids';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
 				break;
-			case 'getStatus':
+			case 'getstatus':
 				$method = 'find_videos_by_ids_unfiltered';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
 				break;
 			default:
-				throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_METHOD);
+				throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_JSON);
 				break;
 		}
 
@@ -195,7 +206,7 @@ class BCDIAPI
 	/**
 	 * Uploads a media asset file to Brightcove.
 	 * @access Public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$type] The type of object to upload
 	 * @param string [$file] The location of the temporary file
 	 * @param array [$meta] The media asset information
@@ -359,57 +370,10 @@ class BCDIAPI
 	}
 
 
-
-	/**
-	 * Retrieves the status of a media asset upload.
-	 * @access Public
-	 * @since 0.3.9
-	 * @param string [$type] The type of object to check
-	 * @param int [$id] The ID of the media asset
-	 * @param string [$ref_id] The reference ID of the media asset
-	 * @return string The upload status
-	 */
-	public function getStatus($type = 'video', $id = NULL, $ref_id = TRUE)
-	{
-		if(!isset($id) && !isset($ref_id))
-		{
-			throw new BCDIAPIIdNotProvided($this, self::ERROR_ID_NOT_PROVIDED);
-		}
-
-		$request = array();
-		$post = array();
-		$params = array();
-
-		$params['token'] = $this->client_secret;
-
-		if(isset($id))
-		{
-			$params[strtolower($type) . '_id'] = $id;
-		}
-
-		if(isset($ref_id))
-		{
-			$params['reference_id'] = $ref_id;
-		}
-
-		if(strtolower($type) == 'video')
-		{
-			$post['method'] = 'get_upload_status';
-		} else {
-			throw new BCDIAPIInvalidType($this, self::ERROR_INVALID_TYPE);
-		}
-
-		$post['params'] = $params;
-
-		$request['json'] = json_encode($post) . "\n";
-
-		return $this->putData($request)->result;
-	}
-
 	/**
 	 * Shares a media asset with the selected accounts.
 	 * @access Public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$type] The type of object to check
 	 * @param int [$id] The ID of the media asset
 	 * @param array [$account_ids] An array of account IDs
@@ -661,7 +625,7 @@ class BCDIAPI
 	/**
 	 * Sends data to the API.
 	 * @access Private
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param array [$request] The data to send
 	 * @param bool [$return_json] Whether we should return any data or not
 	 * @return object An object containing all API return data
@@ -691,7 +655,7 @@ class BCDIAPI
 	/**
 	 * Makes a cURL request.
 	 * @access Private
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param mixed [$request] URL to fetch or the data to send via POST
 	 * @param boolean [$get_request] If false, send POST params
 	 * @return void
@@ -739,7 +703,7 @@ class BCDIAPI
 	/**
 	 * Cleans the response for 32-bit machine compliance.
 	 * @access Private
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$response] The response from a cURL request
 	 * @return string The cleansed string if using a 32-bit machine.
 	 */
@@ -756,7 +720,7 @@ class BCDIAPI
 	/**
 	 * Determines if provided type is valid
 	 * @access Private
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param string [$type] The type
 	 */
 	protected function validType($type)
@@ -786,7 +750,7 @@ class BCDIAPI
 	/**
 	 * Converts an error code into a textual representation.
 	 * @access public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param int [$error_code] The code number of an error
 	 * @return string The error text
 	 */
@@ -806,7 +770,7 @@ class BCDIAPI
 			case self::ERROR_INVALID_FILE_TYPE:
 				return 'Unsupported file type';
 				break;
-			case self::ERROR_INVALID_METHOD:
+			case self::ERROR_INVALID_JSON:
 				return 'Requested method not found';
 				break;
 			case self::ERROR_INVALID_PROPERTY:
@@ -845,7 +809,7 @@ class BCDIAPIException extends Exception
 	/**
 	 * The constructor for the BCDIAPIException class
 	 * @access Public
-	 * @since 1.0.0
+	 * @since 0.1.0
 	 * @param object [$obj] A pointer to the BCDIAPI class
 	 * @param int [$error_code] The error code
 	 * @param string [$raw_error] Any additional error information
