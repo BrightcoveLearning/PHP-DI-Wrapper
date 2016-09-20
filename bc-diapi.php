@@ -59,8 +59,6 @@ class BCDIAPI
 
 	protected $api_calls = 0;
 	protected $bit32 = FALSE;
-	protected $media_delivery = 'default';
-	protected $secure = FALSE;
 	protected $show_notices = FALSE;
 	protected $timeout_attempts = 100;
 	protected $timeout_current = 0;
@@ -69,8 +67,14 @@ class BCDIAPI
 	protected $account_id = NULL;
 	protected $client_id = NULL;
 	protected $client_secret = NULL;
-	protected $url_cms = 'cms.api.brightcove.com/v1/accounts/';
-	protected $url_di = '/ingest.api.brightcove.com/v1/accounts/';
+	protected $access_token = NULL;
+	protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
+	protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
+	protected $di_suffix = '/ingest-requests';
+	protected $video_id = NULL;
+	protected $job_id = NULL;
+	protected $signed_url = NULL;
+	protected $unsigned_url = NULL;
 
 	/**
 	 * The constructor for the BCDIAPI class.
@@ -80,8 +84,9 @@ class BCDIAPI
 	 * @param string [$client_id] The read API token for the Brightcove account
 	 * @param string [$client_secret] The write API token for the Brightcove account
 	 */
-	public function __construct($client_id = NULL, $client_secret = NULL)
+	public function __construct($account_id = NULL, $client_id = NULL, $client_secret = NULL)
 	{
+		$this->account_id = $account_id;
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
 		$this->bit32 = ((string)'99999999999999' == (int)'99999999999999') ? FALSE : TRUE;
@@ -123,14 +128,14 @@ class BCDIAPI
 	}
 
 	/**
-	 * Formats the request for any API 'Find' methods and retrieves the data.
+	 * Formats the request for any API requests and retrieves the data.
 	 * @access Public
 	 * @since 0.1.0
 	 * @param string [$call] The requested API method
 	 * @param mixed [$params] A key-value array of API parameters, or a single value that matches the default
 	 * @return object An object containing all API return data
 	 */
-	public function find($call, $params = NULL)
+	public function submit($call, $params = NULL)
 	{
 		$call = strtolower(preg_replace('/(?:find|_)+/i', '', $call));
 
@@ -516,64 +521,6 @@ class BCDIAPI
 		}
 	}
 
-	/**
-	 * Parses media asset tags array into a key-value array.
-	 * @access Public
-	 * @since 0.3.2
-	 * @param array [$tags] The tags array from a media asset DTO
-	 * @param bool [$implode] Return array to Brightcove format
-	 * @return array A key-value array of tags
-	 */
-	public function convertTags($tags, $implode = FALSE)
-	{
-		$return = array();
-
-		if(count($tags) > 0)
-		{
-			if($implode)
-			{
-				$i = 0;
-
-				foreach($tags as $key => $value)
-				{
-					if($key !== $i)
-					{
-						$return[] = $key . '=' . $value;
-					} else {
-						$return[] = $value;
-					}
-
-					$i++;
-				}
-			} else {
-				foreach($tags as $tag)
-				{
-					if(strpos($tag, '=') === FALSE)
-					{
-						$return[] = $tag;
-					} else {
-						$group = explode('=', $tag);
-						$key = trim($group[0]);
-						$value = trim($group[1]);
-
-						if(!isset($return[$key]))
-						{
-							$return[$key] = $value;
-						} else {
-							if(is_array($return[$key]))
-							{
-								$return[$key][] = $value;
-							} else {
-								$return[$key] = array($return[$key], $value);
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return $return;
-	}
 
 
 	/**
