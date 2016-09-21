@@ -95,6 +95,7 @@ class BCDIAPI
 		$this->account_id = $account_id;
 		$this->client_id = $client_id;
 		$this->client_secret = $client_secret;
+		$this->auth_string = "{$client_id}:{$client_secret}";
 		$this->bit32 = ((string)'99999999999999' == (int)'99999999999999') ? FALSE : TRUE;
 	}
 
