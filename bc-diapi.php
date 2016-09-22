@@ -134,45 +134,62 @@ class BCDIAPI
 		}
 	}
 
+    /**
+     * Adds media (videos, images, text tracks) to the account
+     *
+     */
+    public function add_media($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $ingest_profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL) {
+
+    }
+
 	/**
 	 * Formats the request for any API requests and retrieves the data.
-	 * @access Public
+	 * @access Private
 	 * @since 0.1.0
 	 * @param string [$call] The requested API method
 	 * @param mixed [$params] A key-value array of API parameters, or a single value that matches the default
 	 * @return object An object containing all API return data
 	 */
-	public function submit($call, $request_data = NULL)
+	private function make_request($call, $request_data = NULL)
 	{
 		$call = strtolower(preg_replace('/(?:find|_)+/i', '', $call));
 
+		if (isset($request_data)) {
+        		$data = json_decode($request_data);
+            if (is_null($data)) {
+                self::ERROR_INVALID_JSON);
+            }
+		}
+
 		switch($call)
 		{
-			case 'gettoken':
+			case 'get_token':
 				$url = $url_oauth;
 				$method = 'POST';
-				$get_item_count = FALSE;
+				$headers = array('Content-type: application/x-www-form-urlencoded');
+				$data = array();
+				$user_pwd = $this->$auth_sting;
+				$result = $this->send_request($url, $method, $headers, $data, $user_pwd);
 				break;
-			case 'createvideo':
+			case 'create_video':
 				$url = $url_cms . $account_id . '/videos';
 				$method = 'POST';
-				$get_item_count = FALSE;
 				break;
-			case 's3urls':
-				$method = 'find_all_videos';
+			case 'get_s3urls':
+				$url = $url_di . ;
 				$get_item_count = TRUE;
 				break;
-			case 'putvideo':
+			case 'put_video':
 				$method = 'find_video_by_id';
 				$default = 'video_id';
 				$get_item_count = FALSE;
 				break;
-			case 'ingestvideo':
+			case 'ingest_video':
 				$method = 'find_videos_by_ids';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
 				break;
-			case 'getstatus':
+			case 'get_status':
 				$method = 'find_videos_by_ids_unfiltered';
 				$default = 'video_ids';
 				$get_item_count = FALSE;
@@ -200,175 +217,9 @@ class BCDIAPI
 
 		$this->timeout_current = 0;
 
-		return $this->getData($url);
+		return $this->send_request($url);
 	}
 
-
-	/**
-	 * Uploads a media asset file to Brightcove.
-	 * @access Public
-	 * @since 0.1.0
-	 * @param string [$type] The type of object to upload
-	 * @param string [$file] The location of the temporary file
-	 * @param array [$meta] The media asset information
-	 * @param array [$options] Optional upload values
-	 * @return string The media asset ID
-	 */
-	public function createMedia($type = 'video', $file = NULL, $meta, $options = NULL)
-	{
-		if(strtolower($type) == 'video')
-		{
-			if(isset($file))
-			{
-				preg_match('/(\.f4a|\.f4b|\.f4v|\.f4p|\.flv)*$/i', $file, $invalid_extensions);
-
-				if(isset($invalid_extensions[1]))
-				{
-					if(isset($options['encode_to']))
-					{
-						unset($options['encode_to']);
-
-						throw new BCDIAPIInvalidUploadOption($this, self::ERROR_INVALID_UPLOAD_OPTION);
-					}
-
-					if(isset($options['create_multiple_renditions']))
-					{
-						$options['create_multiple_renditions'] = 'FALSE';
-
-						throw new BCDIAPIInvalidUploadOption($this, self::ERROR_INVALID_UPLOAD_OPTION);
-					}
-
-					if(isset($options['preserve_source_rendition']))
-					{
-						unset($options['preserve_source_rendition']);
-
-						throw new BCDIAPIInvalidUploadOption($this, self::ERROR_INVALID_UPLOAD_OPTION);
-					}
-				}
-
-				if((isset($options['create_multiple_renditions']) && $options['create_multiple_renditions'] === TRUE) && (isset($options['H264NoProcessing']) && $options['H264NoProcessing'] === TRUE))
-				{
-					unset($options['H264NoProcessing']);
-
-					throw new BCDIAPIInvalidUploadOption($this, self::ERROR_INVALID_UPLOAD_OPTION);
-				}
-			}
-		} else {
-			throw new BCDIAPIInvalidType($this, self::ERROR_INVALID_TYPE);
-		}
-
-		$request = array();
-		$post = array();
-		$params = array();
-		$media = array();
-
-		foreach($meta as $key => $value)
-		{
-			$media[$key] = $value;
-		}
-
-		if(!isset($media['name']) || is_null($media['name']) || $media['name'] == '')
-		{
-			$media['name'] = time();
-		}
-
-		if(!isset($media['shortDescription']) || is_null($media['shortDescription']) || $media['shortDescription'] == '')
-		{
-			$media['shortDescription'] = time();
-		}
-
-		if(isset($options))
-		{
-			foreach($options as $key => $value)
-			{
-				$params[$key] = $value;
-			}
-		}
-
-		$params['token'] = $this->client_secret;
-		$params[strtolower($type)] = $media;
-
-		$post['method'] = strtolower('create_' . $type);
-		$post['params'] = $params;
-
-		$request['json'] = json_encode($post);
-
-		if(isset($file))
-		{
-			// Added for PHP 5.5+ support.
-			if (is_string($file) && function_exists('curl_file_create')) {
-				$file = curl_file_create($file);
-			} else {
-				$file = '@' . $file;
-			}
-			$request['file'] = $file;
-		}
-
-		return (string)$this->putData($request)->result;
-	}
-
-
-	/**
-	 * Uploads a media image file to Brightcove.
-	 * @access Public
-	 * @since 0.3.4
-	 * @param string [$type] The type of object to upload image for
-	 * @param mixed [$file] The location of the temporary file or a CURLFile object
-	 * @param array [$meta] The image information
-	 * @param int [$id] The ID of the media asset to assign the image to
-	 * @param string [$ref_id] The reference ID of the media asset to assign the image to
-	 * @param bool [$resize] Whether or not to resize the image on upload
-	 * @return mixed The image asset
-	 */
-	public function createImage($type = 'video', $file = NULL, $meta, $id = NULL, $ref_id = NULL, $resize = TRUE)
-	{
-		$request = array();
-		$post = array();
-		$params = array();
-		$media = array();
-
-		if(strtolower($type) == 'video')
-		{
-			$post['method'] = 'add_image';
-		} else {
-			throw new BCDIAPIInvalidType($this, self::ERROR_INVALID_TYPE);
-		}
-
-		foreach($meta as $key => $value)
-		{
-			$media[$key] = $value;
-		}
-
-		if(isset($id))
-		{
-			$params[strtolower($type) . '_id'] = $id;
-		} elseif(isset($ref_id)) {
-			$params[strtolower($type) . '_reference_id'] = $ref_id;
-		} else {
-			throw new BCDIAPIIdNotProvided($this, self::ERROR_ID_NOT_PROVIDED);
-		}
-
-		if($resize)
-		{
-			$params['resize'] = 'TRUE';
-		} else {
-			$params['resize'] = 'FALSE';
-		}
-
-		$params['token'] = $this->client_secret;
-		$params['image'] = $media;
-
-		$post['params'] = $params;
-
-		$request['json'] = json_encode($post) . "\n";
-
-		if(isset($file))
-		{
-			$request['file'] = is_string($file) ? '@' . $file : $file;
-		}
-
-		return $this->putData($request)->result;
-	}
 
 
 	/**
@@ -541,9 +392,12 @@ class BCDIAPI
 	 * @access Private
 	 * @since 0.1.0
 	 * @param string [$url] The complete API request URL
+	 * @param string [$method] The HTTP method for the request
+	 * @param array [$headers] The HTTP headers to send with the request
+	 * @param string [$data_string] A JSON string containing the request body (if any) to send with the request
 	 * @return object An object containing all API return data
 	 */
-	protected function getData($url)
+	protected function send_request($url = NULL, )
 	{
 		if(class_exists('BCDIAPICache'))
 		{
@@ -560,9 +414,6 @@ class BCDIAPI
 					$data = $response_object;
 				}
 
-				$this->page_number = isset($response_object->page_number) ? $response_object->page_number : NULL;
-				$this->page_size = isset($response_object->page_size) ? $response_object->page_size : NULL;
-				$this->total_count = isset($response_object->total_count) ? $response_object->total_count : NULL;
 
 				return $data;
 			}
@@ -572,7 +423,7 @@ class BCDIAPI
 
 		if(!isset($this->client_id))
 		{
-			throw new BCDIAPITokenError($this, self::ERROR_READ_TOKEN_NOT_PROVIDED);
+			throw new BCDIAPITokenError($this, self::ERROR_CLIENT_ID_NOT_PROVIDED);
 		}
 
 		$response = $this->curlRequest($url, TRUE);
@@ -595,7 +446,7 @@ class BCDIAPI
 						}
 					}
 
-					return $this->getData($url);
+					return $this->send_request($url);
 				} else {
 					throw new BCDIAPIApiError($this, self::ERROR_API_ERROR, $response_object);
 				}
@@ -635,7 +486,7 @@ class BCDIAPI
 	{
 		if(!isset($this->client_secret))
 		{
-			throw new BCDIAPITokenError($this, self::ERROR_WRITE_TOKEN_NOT_PROVIDED);
+			throw new BCDIAPITokenError($this, self::ERROR_CLIENT_SECRET_NOT_PROVIDED);
 		}
 
 		$response = $this->curlRequest($request, FALSE);
@@ -786,8 +637,8 @@ class BCDIAPI
 			case self::ERROR_READ_API_TRANSACTION_FAILED:
 				return 'Read API transaction failed';
 				break;
-			case self::ERROR_READ_TOKEN_NOT_PROVIDED:
-				return 'Read token not provided';
+			case self::ERROR_CLIENT_ID_NOT_PROVIDED:
+				return 'Client id not provided';
 				break;
 			case self::ERROR_SEARCH_TERMS_NOT_PROVIDED:
 				return 'Search terms not provided';
@@ -795,7 +646,7 @@ class BCDIAPI
 			case self::ERROR_WRITE_API_TRANSACTION_FAILED:
 				return 'Write API transaction failed';
 				break;
-			case self::ERROR_WRITE_TOKEN_NOT_PROVIDED:
+			case self::ERROR_CLIENT_SECRET_NOT_PROVIDED:
 				return 'Write token not provided';
 				break;
 			case self::ERROR_DEPRECATED:
