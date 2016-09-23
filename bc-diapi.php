@@ -141,9 +141,18 @@ class BCDIAPI
      * @param string [$video_name] The video title - required either here or in $video_metadata
      * @param object [$video_metadata] Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
      * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is NULL)
-     * @param string [$video_file] temporary file location (for pull-based ingestion; required if $video_file is NULL)
+     * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is NULL)
+     * @param string [$ingest_profile] Name of the ingest profile to use - if NULL, default profile for the account will be used
+     * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to FALSE if the poster and thumbnail are provided
+     * @param object [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
+     * @param object [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
+     * @param object[] [$text_tracks] text tracks information - if included, each object in the array has keys: url (required), srclang (required); kind (optional); label (optional); default (optional)
      */
     public function add_media($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $ingest_profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL) {
+        if (isset($video_metadata)) {
+            $request_data = $video_metadata;
+        }
+        $request_data = new stdClass();
 
     }
 
