@@ -41,46 +41,48 @@
 
 class BCDIAPI
 {
+    const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
     const ERROR_API_ERROR = 1;
+    const ERROR_CLIENT_ID_NOT_PROVIDED = 9;
+    const ERROR_CLIENT_SECRET_NOT_PROVIDED = 11;
     const ERROR_DEPRECATED = 99;
     const ERROR_DTO_DOES_NOT_EXIST = 12;
-    const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
     const ERROR_INVALID_FILE_TYPE = 5;
     const ERROR_INVALID_JSON = 3;
     const ERROR_INVALID_PROPERTY = 4;
     const ERROR_INVALID_TYPE = 6;
     const ERROR_INVALID_UPLOAD_OPTION = 7;
     const ERROR_READ_API_TRANSACTION_FAILED = 8;
-    const ERROR_CLIENT_ID_NOT_PROVIDED = 9;
     const ERROR_SEARCH_TERMS_NOT_PROVIDED = 13;
     const ERROR_WRITE_API_TRANSACTION_FAILED = 10;
-    const ERROR_CLIENT_SECRET_NOT_PROVIDED = 11;
 
 
+    protected $access_token = NULL;
+    protected $account_id = NULL;
     protected $api_calls = 0;
     protected $bit32 = FALSE;
+    protected $client_id = NULL;
+    protected $client_secret = NULL;
+    protected $cms_data = NULL;
+    protected $current_request = NULL;
+    protected $di_data = NULL:
+    protected $di_suffix = '/ingest-requests';
+    protected $job_id = NULL;
+    protected $method = NULL;
+    protected $parsed_data = array();
+    protected $result_parsed = NULL;
     protected $show_notices = FALSE;
+    protected $signed_url = NULL;
     protected $timeout_attempts = 100;
     protected $timeout_current = 0;
     protected $timeout_delay = 1;
     protected $timeout_retry = FALSE;
-    protected $account_id = NULL;
-    protected $client_id = NULL;
-    protected $client_secret = NULL;
-    protected $access_token = NULL;
+    protected $unsigned_url = NULL;
+    protected $url = NULL;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
     protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
     protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
-    protected $di_suffix = '/ingest-requests';
-    protected $url = NULL;
-    protected $method = NULL;
-    protected $current_request = NULL;
-    protected $request_data = NULL;
-    protected $parsed_data = array();
     protected $video_id = NULL;
-    protected $job_id = NULL;
-    protected $signed_url = NULL;
-    protected $unsigned_url = NULL;
 
     /**
      * The constructor for the BCDIAPI class.
@@ -138,21 +140,56 @@ class BCDIAPI
      * Adds media (videos, images, text tracks) to the account
      * @access Public
      * @since 0.1.0
-     * @param string [$video_name] The video title - required either here or in $video_metadata
+     * @param string [$video_name] The video title (either here or in $video_metadata) default: video file name
      * @param object [$video_metadata] Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
      * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is NULL)
      * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is NULL)
-     * @param string [$ingest_profile] Name of the ingest profile to use - if NULL, default profile for the account will be used
+     * @param string [$profile] Name of the ingest profile to use - if NULL, default profile for the account will be used
      * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to FALSE if the poster and thumbnail are provided
-     * @param object [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
-     * @param object [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
-     * @param object[] [$text_tracks] text tracks information - if included, each object in the array has keys: url (required), srclang (required); kind (optional); label (optional); default (optional)
+     * @param array [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
+     * @param array [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
+     * @param array[] [$text_tracks] text tracks information - if included, each object in the array has keys: url (required), srclang (required); kind (optional); label (optional); default (optional)
+     * @param string[] [$callbacks] array of callback URLs
      */
-    public function add_media($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $ingest_profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL) {
-        if (isset($video_metadata)) {
-            $request_data = $video_metadata;
+    public function add_video($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL, $callbacks = NULL) {
+        // set up ingest request data
+        $di_data = array(
+            'master' => array(),
+        );
+        if (isset($profile)) {
+            $di_data['profile'] = $profile;
         }
-        $request_data = new stdClass();
+        if (isset($poster)) {
+            $di_data['capture_images'] = FALSE;
+            $di_data['poster'] = $poster;
+        }
+        if (isset($thumbnail)) {
+            $di_data['thumbnail'] = $thumbnail;
+        }
+        if (isset($text_tracks)) {
+            $di_data['text_tracks'] = $text_tracks;
+        }
+        if (isset($video_url)) {
+            $di_data['master']['url'] = $video_url;
+        }
+        // set up CMS request data
+        if (isset($video_metadata)) {
+            $cms_data = $video_metadata;
+        } else {
+            $cms_data = array();
+        }
+        if (!isset($video_metadata->name)) {
+            if (isset($video_name)) {
+                $video_metadata['name'] = $video_name;
+            } else {
+                if (isset($video_url)) {
+                    $tmp = $video_url;
+                } else if (isset($video_file)) {
+                    $tmp = $video_file;
+                }
+                $video_metadata['name'] = array_pop(explode('/'), $tmp);
+            }
+        }
 
     }
 
@@ -166,7 +203,7 @@ class BCDIAPI
      */
     private function make_request($call, $request_data = NULL)
     {
-        $call = strtolower(preg_replace('/(?:find|_)+/i', '', $call));
+        $this->timeout_current = 0;
 
         if (isset($request_data)) {
                 $data = json_decode($request_data);
@@ -213,25 +250,8 @@ class BCDIAPI
                 break;
         }
 
-        if(!isset($params))
-        {
-            $params = array();
-        } else {
-            if(!is_array($params))
-            {
-                $temp = $params;
 
-                $params = array();
-                $params[$default] = $temp;
-            }
-        }
-
-
-        $url = $this->appendParams($method, $params);
-
-        $this->timeout_current = 0;
-
-        return $this->send_request($url);
+        $response = $this->send_request($url, $headers, $method, $data);
     }
 
 
