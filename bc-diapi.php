@@ -67,6 +67,8 @@ class BCDIAPI
     protected $current_request = NULL;
     protected $di_data = NULL:
     protected $di_suffix = '/ingest-requests';
+    protected $file_name = NULL;
+    protected $is_pull_request = TRUE;
     protected $job_id = NULL;
     protected $method = NULL;
     protected $parsed_data = array();
@@ -77,6 +79,7 @@ class BCDIAPI
     protected $timeout_current = 0;
     protected $timeout_delay = 1;
     protected $timeout_retry = FALSE;
+    protected $token_expires = time();
     protected $unsigned_url = NULL;
     protected $url = NULL;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
@@ -152,6 +155,15 @@ class BCDIAPI
      * @param string[] [$callbacks] array of callback URLs
      */
     public function add_video($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL, $callbacks = NULL) {
+        // get file name
+        if (isset($video_url)) {
+            $tmp = $video_url;
+        } else if (isset($video_file)) {
+            $is_pull_request = FALSE;
+            $tmp = $video_file;
+        }
+        $file_name = array_pop(explode('/'), $tmp);
+
         // set up ingest request data
         $di_data = array(
             'master' => array(),
@@ -182,15 +194,32 @@ class BCDIAPI
             if (isset($video_name)) {
                 $video_metadata['name'] = $video_name;
             } else {
-                if (isset($video_url)) {
-                    $tmp = $video_url;
-                } else if (isset($video_file)) {
-                    $tmp = $video_file;
-                }
-                $video_metadata['name'] = array_pop(explode('/'), $tmp);
+                $video_metadata['name'] = $file_name;
             }
         }
 
+        // data in place, make api requests
+        $cms_response = json_decode($this->make_request('create_video', $cms_data));
+        $video_id = $cms_response['id'];
+        if ($is_pull_request) {
+            $di_response = json_decode($this->make_request('ingest_video', $di_data))
+            $job_id = $di_response['job_id'];
+        } else {
+            
+        }
+
+    }
+
+    /**
+     * Retrieves an access token if there is not a valid one already, and updates the token expiration
+     */
+    private function get_access_token() {
+        if ($token_expires > time()) {
+            $result_parsed = json_decode($this->make_request('get_token', NULL));
+            $access_token = $result_parsed['access_token'];
+            $token_expires = time() + $result_parsed['expires_in'];
+        }
+        return $access_token;
     }
 
     /**
@@ -220,14 +249,21 @@ class BCDIAPI
                 $headers = array('Content-type: application/x-www-form-urlencoded');
                 $data = array();
                 $user_pwd = $this->$auth_sting;
-                $result = $this->send_request($url, $method, $headers, $data, $user_pwd);
+                return $this->send_request($url, $method, $headers, $data, $user_pwd);
                 break;
             case 'create_video':
                 $url = $url_cms . $account_id . '/videos';
                 $method = 'POST';
+                $data = json_encode($request_data);
+                $access_token = $this->get_access_token();
+                $headers = array(
+                    'Content-type: application/json',
+                    'Authorization: Bearer ' . $access_token;
+                );
+                return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
             case 'get_s3urls':
-                $url = $url_di . ;
+                $url = $url_di . $account_id . '/videos/' . $video_id . $file_name;
                 $get_item_count = TRUE;
                 break;
             case 'put_video':
