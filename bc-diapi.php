@@ -214,6 +214,8 @@ class BCDIAPI
 
     /**
      * Retrieves an access token if there is not a valid one already, and updates the token expiration
+     * @since 0.1.0
+     * @return string Access token
      */
     private function get_access_token() {
         if ($token_expires > time()) {
@@ -266,12 +268,19 @@ class BCDIAPI
                 break;
             case 'get_s3urls':
                 $url = $url_di . $account_id . '/videos/' . $video_id . $file_name;
-                $get_item_count = TRUE;
+                $method = GET;
+                $data = array();
+                $access_token = $this->get_access_token();
+                $headers = array(
+                    'Content-type: application/json',
+                    'Authorization: Bearer ' . $access_token;
+                );
+                return $this->send_request($url, $method, $headers, $data, NULL)
                 break;
             case 'put_video':
-                $method = 'find_video_by_id';
-                $default = 'video_id';
-                $get_item_count = FALSE;
+                $url = $signed_url;
+                $method = PUT;
+                $data = array();
                 break;
             case 'ingest_video':
                 $method = 'find_videos_by_ids';
