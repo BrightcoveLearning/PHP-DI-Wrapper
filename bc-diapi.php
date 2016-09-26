@@ -162,7 +162,7 @@ class BCDIAPI
             $is_pull_request = FALSE;
             $tmp = $video_file;
         }
-        $file_name = array_pop(explode('/'), $tmp);
+        $file_name = urlencode(array_pop(explode('/'), $tmp));
 
         // set up ingest request data
         $di_data = array(
@@ -239,10 +239,12 @@ class BCDIAPI
         $this->timeout_current = 0;
 
         if (isset($request_data)) {
-                $data = json_decode($request_data);
-            if (is_null($data)) {
+            if (is_null(json_decode($request_data))) {
                 self::ERROR_INVALID_JSON);
             }
+            $data = $request_data;
+        } else {
+            $data = array();
         }
 
         switch($call)
@@ -251,14 +253,12 @@ class BCDIAPI
                 $url = $url_oauth;
                 $method = 'POST';
                 $headers = array('Content-type: application/x-www-form-urlencoded');
-                $data = array();
                 $user_pwd = $this->$auth_sting;
                 return $this->send_request($url, $method, $headers, $data, $user_pwd);
                 break;
             case 'create_video':
                 $url = $url_cms . $account_id . '/videos';
                 $method = 'POST';
-                $data = json_encode($request_data);
                 $access_token = $this->get_access_token();
                 $headers = array(
                     'Content-type: application/json',
@@ -267,9 +267,8 @@ class BCDIAPI
                 return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
             case 'get_s3urls':
-                $url = $url_di . $account_id . '/videos/' . $video_id . $file_name;
-                $method = GET;
-                $data = array();
+                $url = $url_di . $account_id . '/videos/' . $video_id . '/upload-urls/' . $file_name;
+                $method = 'GET';
                 $access_token = $this->get_access_token();
                 $headers = array(
                     'Content-type: application/json',
@@ -279,13 +278,17 @@ class BCDIAPI
                 break;
             case 'put_video':
                 $url = $signed_url;
-                $method = PUT;
-                $data = array();
+                $method = 'PUT';
                 break;
             case 'ingest_video':
-                $method = 'find_videos_by_ids';
-                $default = 'video_ids';
-                $get_item_count = FALSE;
+                $url = $url_di . $account_id . '/videos/' . $video_id . '/ingest-requests';
+                $method = 'POST';
+                $access_token = $this->get_access_token();
+                $headers = array(
+                'Content-type: application/json',
+                'Authorization: Bearer ' . $access_token;
+            );
+            return $this->send_request($url, $method, $headers, $data, NULL)
                 break;
             case 'get_status':
                 $method = 'find_videos_by_ids_unfiltered';
