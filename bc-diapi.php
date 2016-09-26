@@ -43,7 +43,7 @@ class BCDIAPI
 {
     const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
     const ERROR_API_ERROR = 1;
-    const ERROR_CLIENT_ID_NOT_PROVIDED = 9;
+    const ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED = 9;
     const ERROR_CLIENT_SECRET_NOT_PROVIDED = 11;
     const ERROR_DEPRECATED = 99;
     const ERROR_DTO_DOES_NOT_EXIST = 12;
@@ -60,26 +60,27 @@ class BCDIAPI
     protected $access_token = NULL;
     protected $account_id = NULL;
     protected $api_calls = 0;
-    protected $bit32 = FALSE;
+    protected $bit32 = false;
     protected $client_id = NULL;
     protected $client_secret = NULL;
     protected $cms_data = NULL;
     protected $current_request = NULL;
-    protected $di_data = NULL:
+    protected $di_data = NULL;
     protected $di_suffix = '/ingest-requests';
     protected $file_name = NULL;
-    protected $is_pull_request = TRUE;
+    protected $is_pull_request = true;
     protected $job_id = NULL;
+    protected $job_status = NULL;
     protected $method = NULL;
     protected $parsed_data = array();
     protected $result_parsed = NULL;
-    protected $show_notices = FALSE;
+    protected $show_notices = false;
     protected $signed_url = NULL;
     protected $timeout_attempts = 100;
     protected $timeout_current = 0;
     protected $timeout_delay = 1;
-    protected $timeout_retry = FALSE;
-    protected $token_expires = time();
+    protected $timeout_retry = false;
+    protected $token_expires = NULL;
     protected $unsigned_url = NULL;
     protected $url = NULL;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
@@ -91,9 +92,9 @@ class BCDIAPI
      * The constructor for the BCDIAPI class.
      * @access Public
      * @since 0.1.0
-     * @param string [$account_id] The Video Cloud account id
-     * @param string [$client_id] The read API token for the Brightcove account
-     * @param string [$client_secret] The write API token for the Brightcove account
+     * @param string [$account_id] The Video Cloud account id (required)
+     * @param string [$client_id] The read API token for the Brightcove account (required)
+     * @param string [$client_secret] The write API token for the Brightcove account (required)
      */
     public function __construct($account_id = NULL, $client_id = NULL, $client_secret = NULL)
     {
@@ -101,7 +102,7 @@ class BCDIAPI
         $this->client_id = $client_id;
         $this->client_secret = $client_secret;
         $this->auth_string = "{$client_id}:{$client_secret}";
-        $this->bit32 = ((string)'99999999999999' == (int)'99999999999999') ? FALSE : TRUE;
+        $this->bit32 = ((string)'99999999999999' == (int)'99999999999999') ? false : true;
     }
 
     /**
@@ -148,18 +149,19 @@ class BCDIAPI
      * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is NULL)
      * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is NULL)
      * @param string [$profile] Name of the ingest profile to use - if NULL, default profile for the account will be used
-     * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to FALSE if the poster and thumbnail are provided
+     * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
      * @param array [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
      * @param array [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
      * @param array[] [$text_tracks] text tracks information - if included, each object in the array has keys: url (required), srclang (required); kind (optional); label (optional); default (optional)
-     * @param string[] [$callbacks] array of callback URLs
+     * @param string[] [$callbacks] array of callback URLs (optional)
+     * @return object status of the ingest
      */
-    public function add_video($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $profile = NULL, $capture_images = TRUE, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL, $callbacks = NULL) {
+    public function add_video($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $profile = NULL, $capture_images = true, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL, $callbacks = NULL) {
         // get file name
         if (isset($video_url)) {
             $tmp = $video_url;
         } else if (isset($video_file)) {
-            $is_pull_request = FALSE;
+            $is_pull_request = false;
             $tmp = $video_file;
         }
         $file_name = urlencode(array_pop(explode('/'), $tmp));
@@ -172,7 +174,7 @@ class BCDIAPI
             $di_data['profile'] = $profile;
         }
         if (isset($poster)) {
-            $di_data['capture_images'] = FALSE;
+            $di_data['capture_images'] = false;
             $di_data['poster'] = $poster;
         }
         if (isset($thumbnail)) {
@@ -202,8 +204,9 @@ class BCDIAPI
         $cms_response = json_decode($this->make_request('create_video', $cms_data));
         $video_id = $cms_response['id'];
         if ($is_pull_request) {
-            $di_response = json_decode($this->make_request('ingest_video', $di_data))
+            $di_response = json_decode($this->make_request('ingest_video', $di_data));
             $job_id = $di_response['job_id'];
+            return json_decode($this->make_request('get_status', NULL));
         } else {
             $s3_response = json_decode($this->make_request('get_s3urls', NULL));
             $signed_url = $s3_response['SignedUrl'];
@@ -218,7 +221,13 @@ class BCDIAPI
      * @return string Access token
      */
     private function get_access_token() {
-        if ($token_expires > time()) {
+        if (isset($token_expires)) {
+            if ($token_expires > time()) {
+                $result_parsed = json_decode($this->make_request('get_token', NULL));
+                $access_token = $result_parsed['access_token'];
+                $token_expires = time() + $result_parsed['expires_in'];
+            }
+        } else {
             $result_parsed = json_decode($this->make_request('get_token', NULL));
             $access_token = $result_parsed['access_token'];
             $token_expires = time() + $result_parsed['expires_in'];
@@ -234,13 +243,12 @@ class BCDIAPI
      * @param mixed [$params] A key-value array of API parameters, or a single value that matches the default
      * @return object An object containing all API return data
      */
-    private function make_request($call, $request_data = NULL)
-    {
+    private function make_request($call, $request_data = NULL) {
         $this->timeout_current = 0;
 
         if (isset($request_data)) {
             if (is_null(json_decode($request_data))) {
-                self::ERROR_INVALID_JSON);
+                throw new BCDIAPITokenError($this, self::ERROR_CLIENT_SECRET_NOT_PROVIDED);
             }
             $data = $request_data;
         } else {
@@ -262,7 +270,7 @@ class BCDIAPI
                 $access_token = $this->get_access_token();
                 $headers = array(
                     'Content-type: application/json',
-                    'Authorization: Bearer ' . $access_token;
+                    'Authorization: Bearer ' . $access_token
                 );
                 return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
@@ -272,9 +280,9 @@ class BCDIAPI
                 $access_token = $this->get_access_token();
                 $headers = array(
                     'Content-type: application/json',
-                    'Authorization: Bearer ' . $access_token;
+                    'Authorization: Bearer ' . $access_token
                 );
-                return $this->send_request($url, $method, $headers, $data, NULL)
+                return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
             case 'put_video':
                 $url = $signed_url;
@@ -286,14 +294,19 @@ class BCDIAPI
                 $access_token = $this->get_access_token();
                 $headers = array(
                 'Content-type: application/json',
-                'Authorization: Bearer ' . $access_token;
+                'Authorization: Bearer ' . $access_token
             );
-            return $this->send_request($url, $method, $headers, $data, NULL)
+            return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
             case 'get_status':
-                $method = 'find_videos_by_ids_unfiltered';
-                $default = 'video_ids';
-                $get_item_count = FALSE;
+                $url = $url_di . $account_id . '/videos/' . $video_id . '/ingest_jobs/' . $job_id;
+                $method = 'GET';
+                $access_token = $this->get_access_token();
+                $headers = array(
+                'Content-type: application/json',
+                'Authorization: Bearer ' . $access_token
+                );
+                return $this->send_request($url, $method, $headers, $data, NULL);
                 break;
             default:
                 throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_JSON);
@@ -305,67 +318,6 @@ class BCDIAPI
     }
 
 
-
-    /**
-     * Shares a media asset with the selected accounts.
-     * @access Public
-     * @since 0.1.0
-     * @param string [$type] The type of object to check
-     * @param int [$id] The ID of the media asset
-     * @param array [$account_ids] An array of account IDs
-     * @param bool [$accept] Whether the share should be auto accepted
-     * @param bool [$force] Whether the share should overwrite existing copies of the media
-     * @return array The new media asset IDs
-     */
-    public function shareMedia($type = 'video', $id, $account_ids, $accept = FALSE, $force = FALSE)
-    {
-        if(!isset($id))
-        {
-            throw new BCDIAPIIdNotProvided($this, self::ERROR_ID_NOT_PROVIDED);
-        }
-
-        if(!is_array($account_ids))
-        {
-            $account_ids = array($account_ids);
-        }
-
-        $request = array();
-        $post = array();
-        $params = array();
-
-        $params['token'] = $this->client_secret;
-        $params['sharee_account_ids'] = $account_ids;
-
-        if($accept)
-        {
-            $params['auto_accept'] = 'TRUE';
-        } else {
-            $params['auto_accept'] = 'FALSE';
-        }
-
-        if($force)
-        {
-            $params['force_reshare'] = 'TRUE';
-        } else {
-            $params['force_reshare'] = 'FALSE';
-        }
-
-        if(strtolower($type) == 'video')
-        {
-            $params['video_id'] = $id;
-            $post['method'] = 'share_video';
-        } else {
-            throw new BCDIAPIInvalidType($this, self::ERROR_INVALID_TYPE);
-        }
-
-        $post['params'] = $params;
-
-        $request['json'] = json_encode($post) . "\n";
-
-        return $this->putData($request)->result;
-    }
-
-
     /**
      * Converts milliseconds to formatted time or seconds.
      * @access Public
@@ -374,7 +326,7 @@ class BCDIAPI
      * @param bool [$seconds] Whether to return only seconds
      * @return mixed The formatted length or total seconds of the media asset
      */
-    public function convertTime($ms, $seconds = FALSE)
+    public function convertTime($ms, $seconds = false)
     {
         $total_seconds = ($ms / 1000);
 
@@ -443,35 +395,6 @@ class BCDIAPI
     }
 
     /**
-     * Appends API parameters onto API request URL.
-     * @access Private
-     * @since 0.1.0
-     * @param string [$method] The requested API method
-     * @param array [$params] A key-value array of API parameters
-     * @param string [$default] The default API parameter if only 1 provided
-     * @return string The complete API request URL
-     */
-    protected function appendParams($method, $params = NULL, $default = NULL)
-    {
-        $url = $this->getUrl('read') . 'token=' . $this->client_id . '&command=' . $method;
-
-        if(isset($params))
-        {
-            if(isset($default))
-            {
-                $url .= '&' . $default . '=' . urlencode($params);
-            } else {
-                foreach($params as $option => $value)
-                {
-                    $url .= '&' . $option . '=' . urlencode($value);
-                }
-            }
-        }
-
-        return $url;
-    }
-
-    /**
      * Retrieves API data from provided URL.
      * @access Private
      * @since 0.1.0
@@ -481,36 +404,15 @@ class BCDIAPI
      * @param string [$data_string] A JSON string containing the request body (if any) to send with the request
      * @return object An object containing all API return data
      */
-    protected function send_request($url = NULL, )
-    {
-        if(class_exists('BCDIAPICache'))
-        {
-            $cache = BCDIAPICache::get($url);
-
-            if($cache !== FALSE)
-            {
-                $response_object = json_decode($cache);
-
-                if(isset($response_object->items))
-                {
-                    $data = $response_object->items;
-                } else {
-                    $data = $response_object;
-                }
-
-
-                return $data;
-            }
-        }
+    protected function send_request($url = NULL, $method = NULL, $headers = NULL, $data = NULL, $user_pwd = NULL) {
 
         $this->timeout_current++;
 
-        if(!isset($this->client_id))
-        {
-            throw new BCDIAPITokenError($this, self::ERROR_CLIENT_ID_NOT_PROVIDED);
+        if(!isset($this->client_id) || !isset($this->client_secret)) {
+            throw new BCDIAPITokenError($this, self::ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED);
         }
 
-        $response = $this->curlRequest($url, TRUE);
+        $response = $this->curlRequest($url, true);
 
         if($response && $response != 'NULL')
         {
@@ -535,11 +437,6 @@ class BCDIAPI
                     throw new BCDIAPIApiError($this, self::ERROR_API_ERROR, $response_object);
                 }
             } else {
-                if(class_exists('BCDIAPICache'))
-                {
-                    $cache = BCDIAPICache::set($url, $response_object);
-                }
-
                 if(isset($response_object->items))
                 {
                     $data = $response_object->items;
@@ -566,14 +463,10 @@ class BCDIAPI
      * @param bool [$return_json] Whether we should return any data or not
      * @return object An object containing all API return data
      */
-    protected function putData($request, $return_json = TRUE)
+    protected function putData($request, $return_json = true)
     {
-        if(!isset($this->client_secret))
-        {
-            throw new BCDIAPITokenError($this, self::ERROR_CLIENT_SECRET_NOT_PROVIDED);
-        }
 
-        $response = $this->curlRequest($request, FALSE);
+        $response = $this->curlRequest($request, false);
 
         if($return_json)
         {
@@ -596,7 +489,7 @@ class BCDIAPI
      * @param boolean [$get_request] If false, send POST params
      * @return void
      */
-    protected function curlRequest($request, $get_request = FALSE)
+    protected function curlRequest($request, $get_request = false)
     {
         $curl = curl_init();
 
@@ -665,7 +558,7 @@ class BCDIAPI
         {
             throw new BCDIAPIInvalidType($this, self::ERROR_INVALID_TYPE);
         } else {
-            return TRUE;
+            return true;
         }
     }
 
@@ -680,7 +573,7 @@ class BCDIAPI
     {
         throw new BCDIAPIDeprecated($this, self::ERROR_DEPRECATED);
 
-        return FALSE;
+        return false;
     }
 
     /**
@@ -721,7 +614,7 @@ class BCDIAPI
             case self::ERROR_READ_API_TRANSACTION_FAILED:
                 return 'Read API transaction failed';
                 break;
-            case self::ERROR_CLIENT_ID_NOT_PROVIDED:
+            case self::ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED:
                 return 'Client id not provided';
                 break;
             case self::ERROR_SEARCH_TERMS_NOT_PROVIDED:
