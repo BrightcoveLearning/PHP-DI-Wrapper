@@ -205,7 +205,9 @@ class BCDIAPI
             $di_response = json_decode($this->make_request('ingest_video', $di_data))
             $job_id = $di_response['job_id'];
         } else {
-            
+            $s3_response = json_decode($this->make_request('get_s3urls', NULL));
+            $signed_url = $s3_response['SignedUrl'];
+            $unsigned_url = $s3_response['ApiRequestUrl'];
         }
 
     }
