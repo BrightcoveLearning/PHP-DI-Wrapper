@@ -50,7 +50,7 @@ class BCDIAPI
     const ERROR_INVALID_FILE_TYPE = 5;
     const ERROR_INVALID_JSON = 3;
     const ERROR_INVALID_PROPERTY = 4;
-    const ERROR_INVALID_TYPE = 6;
+    const ERROR_INVALID_CALL = 6;
     const ERROR_INVALID_UPLOAD_OPTION = 7;
     const ERROR_READ_API_TRANSACTION_FAILED = 8;
     const ERROR_SEARCH_TERMS_NOT_PROVIDED = 13;
@@ -59,7 +59,6 @@ class BCDIAPI
 
     protected $access_token = NULL;
     protected $account_id = NULL;
-    protected $api_calls = 0;
     protected $bit32 = false;
     protected $client_id = NULL;
     protected $client_secret = NULL;
@@ -71,7 +70,7 @@ class BCDIAPI
     protected $is_pull_request = true;
     protected $job_id = NULL;
     protected $job_status = NULL;
-    protected $method = NULL;
+    protected $options['method'] = NULL;
     protected $parsed_data = array();
     protected $result_parsed = NULL;
     protected $show_notices = false;
@@ -82,7 +81,7 @@ class BCDIAPI
     protected $timeout_retry = false;
     protected $token_expires = NULL;
     protected $unsigned_url = NULL;
-    protected $url = NULL;
+    protected $options['url'] = NULL;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
     protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
     protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
@@ -161,56 +160,56 @@ class BCDIAPI
         if (isset($video_url)) {
             $tmp = $video_url;
         } else if (isset($video_file)) {
-            $is_pull_request = false;
+            $this->is_pull_request = false;
             $tmp = $video_file;
         }
-        $file_name = urlencode(array_pop(explode('/'), $tmp));
+        $this->file_name = urlencode(array_pop(explode('/'), $tmp));
 
         // set up ingest request data
-        $di_data = array(
+        $this->di_data = array(
             'master' => array(),
         );
         if (isset($profile)) {
-            $di_data['profile'] = $profile;
+            $this->di_data['profile'] = $profile;
         }
         if (isset($poster)) {
-            $di_data['capture_images'] = false;
-            $di_data['poster'] = $poster;
+            $this->di_data['capture_images'] = false;
+            $this->di_data['poster'] = $poster;
         }
         if (isset($thumbnail)) {
-            $di_data['thumbnail'] = $thumbnail;
+            $this->di_data['thumbnail'] = $thumbnail;
         }
         if (isset($text_tracks)) {
-            $di_data['text_tracks'] = $text_tracks;
+            $this->di_data['text_tracks'] = $text_tracks;
         }
         if (isset($video_url)) {
-            $di_data['master']['url'] = $video_url;
+            $this->di_data['master']['url'] = $video_url;
         }
         // set up CMS request data
         if (isset($video_metadata)) {
-            $cms_data = $video_metadata;
+            $this->cms_data = $video_metadata;
         } else {
-            $cms_data = array();
+            $this->cms_data = array();
         }
         if (!isset($video_metadata->name)) {
             if (isset($video_name)) {
-                $video_metadata['name'] = $video_name;
+                $this->cms_data['name'] = $video_name;
             } else {
-                $video_metadata['name'] = $file_name;
+                $this->cms_data['name'] = $this->file_name;
             }
         }
 
         // data in place, make api requests
-        $cms_response = json_decode($this->make_request('create_video', $cms_data));
-        $video_id = $cms_response['id'];
-        if ($is_pull_request) {
-            $di_response = json_decode($this->make_request('ingest_video', $di_data));
-            $job_id = $di_response['job_id'];
+        $cms_response = json_decode($this->make_request('create_video', $this->cms_data));
+        $this->video_id = $cms_response['id'];
+        if ($this->is_pull_request) {
+            $di_response = json_decode($this->make_request('ingest_video', $this->di_data));
+            $this->job_id = $di_response['job_id'];
             return json_decode($this->make_request('get_status', NULL));
         } else {
             $s3_response = json_decode($this->make_request('get_s3urls', NULL));
-            $signed_url = $s3_response['SignedUrl'];
-            $unsigned_url = $s3_response['ApiRequestUrl'];
+            $this->signed_url = $s3_response['SignedUrl'];
+            $this->unsigned_url = $s3_response['ApiRequestUrl'];
         }
 
     }
@@ -221,18 +220,18 @@ class BCDIAPI
      * @return string Access token
      */
     private function get_access_token() {
-        if (isset($token_expires)) {
-            if ($token_expires > time()) {
+        if (isset($this->token_expires)) {
+            if ($this->token_expires > time()) {
                 $result_parsed = json_decode($this->make_request('get_token', NULL));
-                $access_token = $result_parsed['access_token'];
-                $token_expires = time() + $result_parsed['expires_in'];
+                $this->access_token = $result_parsed['access_token'];
+                $this->token_expires = time() + $result_parsed['expires_in'];
             }
         } else {
             $result_parsed = json_decode($this->make_request('get_token', NULL));
-            $access_token = $result_parsed['access_token'];
-            $token_expires = time() + $result_parsed['expires_in'];
+            $this->access_token = $result_parsed['access_token'];
+            $this->token_expires = time() + $result_parsed['expires_in'];
         }
-        return $access_token;
+        return $this->access_token;
     }
 
     /**
@@ -245,10 +244,11 @@ class BCDIAPI
      */
     private function make_request($call, $request_data = NULL) {
         $this->timeout_current = 0;
+        $options = array();
 
         if (isset($request_data)) {
             if (is_null(json_decode($request_data))) {
-                throw new BCDIAPITokenError($this, self::ERROR_CLIENT_SECRET_NOT_PROVIDED);
+                $data = array();
             }
             $data = $request_data;
         } else {
@@ -258,120 +258,63 @@ class BCDIAPI
         switch($call)
         {
             case 'get_token':
-                $url = $url_oauth;
-                $method = 'POST';
-                $headers = array('Content-type: application/x-www-form-urlencoded');
-                $user_pwd = $this->$auth_sting;
-                return $this->send_request($url, $method, $headers, $data, $user_pwd);
+                $options['url'] = $this->url_oauth;
+                $options['method'] = 'POST';
+                $options'[headers]' = array('Content-type: application/x-www-form-urlencoded');
+                $options'[user_pwd]' = $this->$auth_sting;
+                return $this->send_request($url, $options);
                 break;
             case 'create_video':
-                $url = $url_cms . $account_id . '/videos';
-                $method = 'POST';
-                $access_token = $this->get_access_token();
-                $headers = array(
+                $options['url'] = $this->url_cms . $this->account_id . '/videos';
+                $options['method'] = 'POST';
+                $this->$access_token = $this->get_access_token();
+                $options['headers'] = array(
                     'Content-type: application/json',
                     'Authorization: Bearer ' . $access_token
                 );
-                return $this->send_request($url, $method, $headers, $data, NULL);
+                return $this->send_request($url, $options);
                 break;
             case 'get_s3urls':
-                $url = $url_di . $account_id . '/videos/' . $video_id . '/upload-urls/' . $file_name;
-                $method = 'GET';
-                $access_token = $this->get_access_token();
-                $headers = array(
+                $options['url'] = $this->url_di . $this->account_id . '/videos/' . $this->video_id . '/upload-urls/' . $this->file_name;
+                $options['method'] = 'GET';
+                $this->access_token = $this->get_access_token();
+                $options['headers'] = array(
                     'Content-type: application/json',
-                    'Authorization: Bearer ' . $access_token
+                    'Authorization: Bearer ' . $this->access_token
                 );
-                return $this->send_request($url, $method, $headers, $data, NULL);
+                return $this->send_request($url, $options);
                 break;
             case 'put_video':
-                $url = $signed_url;
-                $method = 'PUT';
+                $options['url'] = $this->signed_url;
+                $options['method'] = 'PUT';
                 break;
             case 'ingest_video':
-                $url = $url_di . $account_id . '/videos/' . $video_id . '/ingest-requests';
-                $method = 'POST';
-                $access_token = $this->get_access_token();
-                $headers = array(
+                $options['url'] = $this->url_di . $this->account_id . '/videos/' . $this->video_id . '/ingest-requests';
+                $options['method'] = 'POST';
+                $this->access_token = $this->get_access_token();
+                $options['headers'] = array(
                 'Content-type: application/json',
-                'Authorization: Bearer ' . $access_token
-            );
-            return $this->send_request($url, $method, $headers, $data, NULL);
+                'Authorization: Bearer ' . $this->access_token
+                );
+                return $this->send_request($options);
                 break;
             case 'get_status':
-                $url = $url_di . $account_id . '/videos/' . $video_id . '/ingest_jobs/' . $job_id;
-                $method = 'GET';
-                $access_token = $this->get_access_token();
-                $headers = array(
+                $options['url'] = $this->url_di . $this->account_id . '/videos/' . $this->video_id . '/ingest_jobs/' . $this->job_id;
+                $options['method'] = 'GET';
+                $this->access_token = $this->get_access_token();
+                $options['headers'] = array(
                 'Content-type: application/json',
-                'Authorization: Bearer ' . $access_token
+                'Authorization: Bearer ' . $this->access_token
                 );
-                return $this->send_request($url, $method, $headers, $data, NULL);
+                return $this->send_request($url, $options);
                 break;
             default:
-                throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_JSON);
+                throw new BCDIAPIInvalidMethod($this, self::ERROR_INVALID_CALL);
                 break;
         }
-
-
-        $response = $this->send_request($url, $headers, $method, $data);
     }
 
 
-    /**
-     * Converts milliseconds to formatted time or seconds.
-     * @access Public
-     * @since 0.2.1
-     * @param int [$ms] The length of the media asset in milliseconds
-     * @param bool [$seconds] Whether to return only seconds
-     * @return mixed The formatted length or total seconds of the media asset
-     */
-    public function convertTime($ms, $seconds = false)
-    {
-        $total_seconds = ($ms / 1000);
-
-        if($seconds)
-        {
-            return $total_seconds;
-        } else {
-            $time = '';
-
-            $value = array(
-                'hours' => 0,
-                'minutes' => 0,
-                'seconds' => 0
-            );
-
-            if($total_seconds >= 3600)
-            {
-                $value['hours'] = floor($total_seconds / 3600);
-                $total_seconds = $total_seconds % 3600;
-
-                $time .= $value['hours'] . ':';
-            }
-
-            if($total_seconds >= 60)
-            {
-                $value['minutes'] = floor($total_seconds / 60);
-                $total_seconds = $total_seconds % 60;
-
-                $time .= $value['minutes'] . ':';
-            } else {
-                $time .= '0:';
-            }
-
-            $value['seconds'] = floor($total_seconds);
-
-            if($value['seconds'] < 10)
-            {
-                $value['seconds'] = '0' . $value['seconds'];
-            }
-
-            $time .= $value['seconds'];
-
-            return $time;
-        }
-    }
 
 
 
@@ -404,15 +347,17 @@ class BCDIAPI
      * @param string [$data_string] A JSON string containing the request body (if any) to send with the request
      * @return object An object containing all API return data
      */
-    protected function send_request($url = NULL, $method = NULL, $headers = NULL, $data = NULL, $user_pwd = NULL) {
+    protected function send_request($options = NULL) {
 
-        $this->timeout_current++;
+
+
+        // $this->timeout_current++;
 
         if(!isset($this->client_id) || !isset($this->client_secret)) {
             throw new BCDIAPITokenError($this, self::ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED);
         }
 
-        $response = $this->curlRequest($url, true);
+        $response = $this->curlRequest($options);
 
         if($response && $response != 'NULL')
         {
@@ -489,23 +434,25 @@ class BCDIAPI
      * @param boolean [$get_request] If false, send POST params
      * @return void
      */
-    protected function curlRequest($request, $get_request = false)
-    {
+    protected function curlRequest($options) {
         $curl = curl_init();
 
-        if($get_request)
-        {
-            curl_setopt($curl, CURLOPT_URL, $request);
-        } else {
-            curl_setopt($curl, CURLOPT_URL, $this->getUrl('write'));
-            curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $request);
+        curl_setopt($curl, CURLOPT_URL, $options['url']);
+        if (isset($options['headers'])) {
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $options['headers']));
+        }
+        if ($options['method'] === 'POST'))
+            curl_setopt($curl, CURLOPT_POST, true);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $options['data']);
+            if (isset($options['user_pwd'])) {
+                curl_setopt($curl, CURLOPT_USERPWD, $options['user_pwd']);
+            }
         }
 
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $response = curl_exec($curl);
 
-        $this->api_calls++;
+        // $this->api_calls++;
 
         $curl_error = NULL;
 
