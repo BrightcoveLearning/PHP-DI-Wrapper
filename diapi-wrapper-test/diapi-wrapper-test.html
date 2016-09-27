@@ -1,0 +1,158 @@
+<?php
+require('../bc-diapi.php');
+
+?>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>BCDIAPI Wrapper Test</title>
+        <style>
+          body {
+              font-family: sans-serif;
+              color: #333;
+              padding: 4em;
+              padding-top: 0;
+          }
+          fieldset {
+              border-color: #559BB9;
+              border-radius: 1em;
+              font-size: small;
+          }
+          legend {
+              color: #559BB9;
+              text-align: center;
+              font-weight: bold;
+              font-size: 1.5em;
+          }
+          textarea.input {
+              width: 100%;
+              height: 6em;
+          }
+          textarea.output {
+              width: 100%;
+              height: 8em;
+          }
+          textarea.url {
+              width: 100%;
+              height: 3em;
+          }
+          button {
+              padding: 1em;
+          }
+        </style>
+    </head>
+    <body>
+    <h1>BCDIAPI Wrapper Test</h1>
+
+    <div class="form-wrapper">
+        <fieldset>
+            <legend>Input</legend>
+                <p>
+                Account id:
+                <input name="account" id="account" type="text" value="20318290001">
+            </p>
+                <p>
+                    Client id:
+                    <input name="client_id" id="client_id" type="text" value="">
+                </p>
+                <p>
+                    Client secret:
+                    <input name="client_secret" id="client_secret" type="text" value="">
+                </p>
+                <p>
+                    Select video for <strong>pull-based</strong> ingestion:
+                    <select id="pullVideoSelect">
+                        <option value="">Select a video</option>
+                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
+                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
+                        <option value="http://solutions.brightcove.com/bcls/assets/videos/laughing_gull.mp4">Laughing Gull</option>
+                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
+                    </select>
+                </p>
+                <p>
+                    Select video for <strong>pushed-based</strong> ingestion:
+                    <select id="pushVideoSelect">
+                        <option value="">Select a video</option>
+                        <option value="../../assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
+                        <option value="../../assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
+                        <option value="../../assets/videos/laughing_gull.mp4">Laughing Gull</option>
+                        <option value="../../assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
+                    </select>
+                </p>
+                Request type:<br />
+                <input type="radio" id="rNewVideo" name="requestType" value="newVideo" checked="checked"><label for="newVideo"> New Video</label><br>
+                <input type="radio" id="rReplaceVideo" name="requestType" value="replaceVideo"><label for="replaceVideo"> Replace Video</label> | Video ID: <input type="text" id="replaceVideoId" value=""><br>
+                <input type="radio" id="rRetranscodeVideo" name="requestType" value="retrancodeVideo"><label for="retrancodeVideo"> Retranscode Video</label> | Video ID: <input type="text" id="retranscodeVideoId" value=""><br>
+                <input type="radio" name="requestType" id="rAddMedia" value="addMedia"><label for="addMedia"> Add media for Video</label> | Video ID: <input type="text" id="addMediaId" value=""><br>
+
+                <p>
+                    Video Metadata (optional):<br />
+                    <textarea class="input" id="metadata">{
+  "description": "An original nature video",
+  "custom_fields": {
+    "subject": "Bird"
+  },
+  "tags": [
+    "nature",
+    "bird"
+  ]
+}</textarea>
+                </p>
+            <pre><code id="response"></code></pre>
+            <p>
+                <button id="Submit">Submit</button>
+            </p>
+        </fieldset>
+    </div>
+    <div>
+        <fieldset>
+            <legend>Output</legend>
+            <p>
+                CMS API request:<br />
+                <textarea class="url" id="cmsRequest"></textarea>
+            </p>
+            <p>
+                CMS API request:<br />
+                <textarea class="output" id="cmsResponse"></textarea>
+            </p>
+            <p>
+                DI API request:<br />
+                <textarea class="url" id="diRequest"></textarea>
+            </p>
+            <p>
+                DI API request:<br />
+                <textarea class="output" id="diResponse"></textarea>
+            </p>
+        </fieldset>
+    </div>
+        <script>
+        var BCLS = (function (window, document) {
+            var account_id = document.getElementById('account_id'),
+                client_id = document.getElementById('client_id'),
+                client_secret = document.getElementById('client_secret'),
+                pullVideoSelect = document.getElementById('pullVideoSelect'),
+                pushVideoSelect = document.getElementById('pushVideoSelect'),
+                requestType = document.getElementsByName('requestType')
+
+
+                /**
+                 * get selected value for single select element
+                 * @param {htmlElement} e the select element
+                 * @return {Object} object containing the `value`, text, and selected `index`
+                 */
+                function getSelectedValue(e) {
+                    var selected = e.options[e.selectedIndex],
+                        val = selected.value,
+                        txt = selected.textContent,
+                        idx = e.selectedIndex;
+                    return {
+                        value: val,
+                        text: txt,
+                        index: idx
+                    }
+                }
+            })(window, document);
+        </script>
+    </body>
+</html>

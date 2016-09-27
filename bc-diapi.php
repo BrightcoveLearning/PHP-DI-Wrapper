@@ -57,35 +57,35 @@ class BCDIAPI
     const ERROR_WRITE_API_TRANSACTION_FAILED = 10;
 
 
-    protected $access_token = NULL;
-    protected $account_id = NULL;
+    protected $access_token = null;
+    protected $account_id = null;
     protected $bit32 = false;
-    protected $client_id = NULL;
-    protected $client_secret = NULL;
-    protected $cms_data = NULL;
-    protected $current_request = NULL;
-    protected $di_data = NULL;
+    protected $client_id = null;
+    protected $client_secret = null;
+    protected $cms_data = null;
+    protected $current_request = null;
+    protected $di_data = null;
     protected $di_suffix = '/ingest-requests';
-    protected $file_name = NULL;
+    protected $file_name = null;
     protected $is_pull_request = true;
-    protected $job_id = NULL;
-    protected $job_status = NULL;
-    protected $options['method'] = NULL;
+    protected $job_id = null;
+    protected $job_status = null;
+    protected $options['method'] = null;
     protected $parsed_data = array();
-    protected $result_parsed = NULL;
+    protected $result_parsed = null;
     protected $show_notices = false;
-    protected $signed_url = NULL;
+    protected $signed_url = null;
     protected $timeout_attempts = 100;
     protected $timeout_current = 0;
     protected $timeout_delay = 1;
     protected $timeout_retry = false;
-    protected $token_expires = NULL;
-    protected $unsigned_url = NULL;
-    protected $options['url'] = NULL;
+    protected $token_expires = null;
+    protected $unsigned_url = null;
+    protected $options['url'] = null;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
     protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
     protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
-    protected $video_id = NULL;
+    protected $video_id = null;
 
     /**
      * The constructor for the BCDIAPI class.
@@ -95,7 +95,7 @@ class BCDIAPI
      * @param string [$client_id] The read API token for the Brightcove account (required)
      * @param string [$client_secret] The write API token for the Brightcove account (required)
      */
-    public function __construct($account_id = NULL, $client_id = NULL, $client_secret = NULL)
+    public function __construct($account_id = null, $client_id = null, $client_secret = null)
     {
         $this->account_id = $account_id;
         $this->client_id = $client_id;
@@ -145,9 +145,9 @@ class BCDIAPI
      * @since 0.1.0
      * @param string [$video_name] The video title (either here or in $video_metadata) default: video file name
      * @param object [$video_metadata] Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
-     * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is NULL)
-     * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is NULL)
-     * @param string [$profile] Name of the ingest profile to use - if NULL, default profile for the account will be used
+     * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is null)
+     * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is null)
+     * @param string [$profile] Name of the ingest profile to use - if null, default profile for the account will be used
      * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
      * @param array [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
      * @param array [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
@@ -155,7 +155,7 @@ class BCDIAPI
      * @param string[] [$callbacks] array of callback URLs (optional)
      * @return object status of the ingest
      */
-    public function add_video($video_name = NULL, $video_metadata = NULL, $video_url = NULL, $video_file = NULL, $profile = NULL, $capture_images = true, $poster = NULL, $thumbnail = NULL, $text_tracks = NULL, $callbacks = NULL) {
+    public function add_video($video_name = null, $video_metadata = null, $video_url = null, $video_file = null, $profile = null, $capture_images = true, $poster = null, $thumbnail = null, $text_tracks = null, $callbacks = null) {
         // get file name
         if (isset($video_url)) {
             $tmp = $video_url;
@@ -205,9 +205,9 @@ class BCDIAPI
         if ($this->is_pull_request) {
             $di_response = json_decode($this->make_request('ingest_video', $this->di_data));
             $this->job_id = $di_response['job_id'];
-            return json_decode($this->make_request('get_status', NULL));
+            return json_decode($this->make_request('get_status', null));
         } else {
-            $s3_response = json_decode($this->make_request('get_s3urls', NULL));
+            $s3_response = json_decode($this->make_request('get_s3urls', null));
             $this->signed_url = $s3_response['SignedUrl'];
             $this->unsigned_url = $s3_response['ApiRequestUrl'];
         }
@@ -222,12 +222,12 @@ class BCDIAPI
     private function get_access_token() {
         if (isset($this->token_expires)) {
             if ($this->token_expires > time()) {
-                $result_parsed = json_decode($this->make_request('get_token', NULL));
+                $result_parsed = json_decode($this->make_request('get_token', null));
                 $this->access_token = $result_parsed['access_token'];
                 $this->token_expires = time() + $result_parsed['expires_in'];
             }
         } else {
-            $result_parsed = json_decode($this->make_request('get_token', NULL));
+            $result_parsed = json_decode($this->make_request('get_token', null));
             $this->access_token = $result_parsed['access_token'];
             $this->token_expires = time() + $result_parsed['expires_in'];
         }
@@ -242,7 +242,7 @@ class BCDIAPI
      * @param mixed [$params] A key-value array of API parameters, or a single value that matches the default
      * @return object An object containing all API return data
      */
-    private function make_request($call, $request_data = NULL) {
+    private function make_request($call, $request_data = null) {
         $this->timeout_current = 0;
         $options = array();
 
@@ -347,7 +347,7 @@ class BCDIAPI
      * @param string [$data_string] A JSON string containing the request body (if any) to send with the request
      * @return object An object containing all API return data
      */
-    protected function send_request($options = NULL) {
+    protected function send_request($options = null) {
 
 
 
@@ -359,7 +359,7 @@ class BCDIAPI
 
         $response = $this->curlRequest($options);
 
-        if($response && $response != 'NULL')
+        if($response && $response != 'null')
         {
             $response_object = json_decode(preg_replace('/[[:cntrl:]]/u', '', $response));;
 
@@ -389,9 +389,9 @@ class BCDIAPI
                     $data = $response_object;
                 }
 
-                $this->page_number = isset($response_object->page_number) ? $response_object->page_number : NULL;
-                $this->page_size = isset($response_object->page_size) ? $response_object->page_size : NULL;
-                $this->total_count = isset($response_object->total_count) ? $response_object->total_count : NULL;
+                $this->page_number = isset($response_object->page_number) ? $response_object->page_number : null;
+                $this->page_size = isset($response_object->page_size) ? $response_object->page_size : null;
+                $this->total_count = isset($response_object->total_count) ? $response_object->total_count : null;
 
                 return $data;
             }
@@ -454,7 +454,7 @@ class BCDIAPI
 
         // $this->api_calls++;
 
-        $curl_error = NULL;
+        $curl_error = null;
 
         if(curl_errno($curl))
         {
@@ -463,7 +463,7 @@ class BCDIAPI
 
         curl_close($curl);
 
-        if($curl_error !== NULL)
+        if($curl_error !== null)
         {
             if($get_request)
             {
@@ -516,7 +516,7 @@ class BCDIAPI
      * @deprecated 1.2.0
      * @return string The embed code
      */
-    public function embed($a = NULL, $b = NULL, $c = NULL, $d = NULL, $e = NULL)
+    public function embed($a = null, $b = null, $c = null, $d = null, $e = null)
     {
         throw new BCDIAPIDeprecated($this, self::ERROR_DEPRECATED);
 
@@ -590,7 +590,7 @@ class BCDIAPIException extends Exception
      * @param int [$error_code] The error code
      * @param string [$raw_error] Any additional error information
      */
-    public function __construct(BCDIAPI $obj, $error_code, $raw_error = NULL)
+    public function __construct(BCDIAPI $obj, $error_code, $raw_error = null)
     {
         $error = $obj->getErrorAsString($error_code);
 
