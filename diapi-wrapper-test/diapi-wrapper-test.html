@@ -44,57 +44,91 @@
     <div class="form-wrapper">
         <fieldset>
             <legend>Input</legend>
-                <p>
+            <p>
                 Account id:
-                <input name="account" id="account" type="text" value="20318290001">
+                <input name="account" id="accountId" type="text" value="">
             </p>
-                <p>
-                    Client id:
-                    <input name="client_id" id="client_id" type="text" value="">
-                </p>
-                <p>
-                    Client secret:
-                    <input name="client_secret" id="client_secret" type="text" value="">
-                </p>
-                <p>
-                    Select video for <strong>pull-based</strong> ingestion:
-                    <select id="pullVideoSelect">
-                        <option value="">Select a video</option>
-                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
-                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
-                        <option value="http://solutions.brightcove.com/bcls/assets/videos/laughing_gull.mp4">Laughing Gull</option>
-                        <option value="http://solutions.brightcove.com/bcls/assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
-                    </select>
-                </p>
-                <p>
-                    Select video for <strong>pushed-based</strong> ingestion:
-                    <select id="pushVideoSelect">
-                        <option value="">Select a video</option>
-                        <option value="../../assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
-                        <option value="../../assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
-                        <option value="../../assets/videos/laughing_gull.mp4">Laughing Gull</option>
-                        <option value="../../assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
-                    </select>
-                </p>
+            <p>
+                Client id:
+                <input name="client_id" id="clientId" type="text" value="">
+            </p>
+            <p>
+                Client secret:
+                <input name="client_secret" id="clientSecret" type="text" value="">
+            </p>
+            <p>
                 Request type:<br />
-                <input type="radio" id="rNewVideo" name="requestType" value="newVideo" checked="checked"><label for="rNewVideo"> New Video</label><br>
-                <input type="radio" id="rReplaceVideo" name="requestType" value="replaceVideo"><label for="rReplaceVideo"> Replace Video</label> | Video ID: <input type="text" id="replaceVideoId" value=""><br>
+                <input type="radio" id="rPullVideo" name="requestType" value="pullNewVideo" checked="checked"><label for="rPullVideo"> New Video (pull-based)</label><br>
+                <input type="radio" id="rPushVideo" name="requestType" value="pushNewVideo"><label for="rPushVideo"> New Video (sush-based)</label><br>
+                <input type="radio" id="rPullReplaceVideo" name="requestType" value="pullReplaceVideo"><label for="rPullReplaceVideo"> Replace Video (pull-based)</label> | Video ID: <input type="text" id="pullReplaceVideoId" value=""><br>
+                <input type="radio" id="rPushReplaceVideo" name="requestType" value="pushReplaceVideo"><label for="rPushReplaceVideo"> Replace Video (push-based)</label> | Video ID: <input type="text" id="pushReplaceVideoId" value=""><br>
                 <input type="radio" id="rRetranscodeVideo" name="requestType" value="retrancodeVideo"><label for="rRetranscodeVideo"> Retranscode Video</label> | Video ID: <input type="text" id="retranscodeVideoId" value=""><br>
-                <input type="radio" name="requestType" id="rAddMedia" value="addMedia"><label for="rAddMedia"> Add media for Video</label> | Video ID: <input type="text" id="addMediaId" value=""><br>
-
-                <p>
-                    Video Metadata (optional):<br />
-                    <textarea class="input" id="metadata">{
-  "description": "An original nature video",
-  "custom_fields": {
-    "subject": "Bird"
-  },
-  "tags": [
-    "nature",
-    "bird"
-  ]
+                <input type="radio" name="requestType" id="rAddMedia" value="addMedia"><label for="rAddMedia"> Add media for Video</label> | Video ID: <input type="text" id="addMediaVideoId" value=""><br>
+            </p>
+            <p>
+                Select video for <strong>pull-based</strong> ingestion:
+                <select id="pullVideoSelect">
+                    <option value="">Select a video</option>
+                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
+                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
+                    <option value="http://solutions.brightcove.com/bcls/assets/videos/laughing_gull.mp4">Laughing Gull</option>
+                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
+                </select>
+            </p>
+            <p>
+                Select video for <strong>pushed-based</strong> ingestion:
+                <select id="pushVideoSelect">
+                    <option value="">Select a video</option>
+                    <option value="../../assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
+                    <option value="../../assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
+                    <option value="../../assets/videos/laughing_gull.mp4">Laughing Gull</option>
+                    <option value="../../assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
+                </select>
+            </p>
+            <p>
+                <input type="checkbox" id="captureImages" value="true" /> <label for="captureImages">Capture Images</label>,
+            </p>
+            <p>
+                Video Metadata (JSON: optional):<br />
+<textarea class="input" id="metadata">{
+    "description": "An original nature video",
+    "custom_fields": {
+        "subject": "Bird"
+    },
+    "tags": [
+        "nature",
+        "bird"
+    ]
 }</textarea>
-                </p>
+            </p>
+            <p>
+                Poster Information (JSON: optional):<br />
+<textarea class="input" id="posterdata">{
+  "url": "http://solutions.brightcove.com/bcls/images/Great-Blue-Heron.png",
+  "height": 360,
+  "width": 640
+}</textarea>
+            </p>
+            <p>
+                Thumbnail Information (JSON: optional):<br />
+<textarea class="input" id="thumbnaildata">{
+  "url": "http://solutions.brightcove.com/bcls/images/great-blue-heron-thumbnail.png",
+  "height": 90,
+  "width": 160
+}</textarea>
+            </p>
+            <p>
+                Text Tracks Information (JSON: optional):<br />
+<textarea class="input" id="texttracksdata">[
+  {
+    "url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt",
+    "srclang": "en",
+    "kind": "captions",
+    "label": "EN",
+    "default": true
+  }
+]</textarea>
+            </p>
             <p>
                 <button id="submit">Submit</button>
             </p>
@@ -123,19 +157,39 @@
     </div>
         <script>
         var BCLS = (function (window, document) {
-            var account_id = document.getElementById('account_id'),
-                client_id = document.getElementById('client_id'),
-                client_secret = document.getElementById('client_secret'),
+            var requestURL = './diapi-wrapper-test.php',
+                accountId = document.getElementById('accountId'),
+                clientId = document.getElementById('clientId'),
+                clientSecret = document.getElementById('clientSecret'),
                 pullVideoSelect = document.getElementById('pullVideoSelect'),
                 pushVideoSelect = document.getElementById('pushVideoSelect'),
                 requestType = document.getElementsByName('requestType'),
+                captureImages = document.getElementById('captureImages'),
+                pullReplaceVideoId = document.getElementById('pullReplaceVideoId'),
+                pushReplaceVideoId = document.getElementById('pushReplaceVideoId'),
+                retranscodeVideoId = document.getElementById('retranscodeVideoId'),
+                addMediaVideoId = document.getElementById('addMediaVideoId'),
                 metadata = document.getElementById('metadata'),
+                posterdata = document.getElementById('posterdata'),
+                thumbnaildata = document.getElementById('thumbnaildata'),
+                texttracksdata = document.getElementById('texttracksdata'),
                 submit = document.getElementById('submit'),
                 cmsRequest = document.getElementById('cmsRequest'),
                 cmsResponse = document.getElementById('cmsResponse'),
                 diRequest = document.getElementById('diRequest'),
                 diResponse = document.getElementById('diResponse');
 
+                /**
+                 * tests for all the ways a variable might be undefined or not have a value
+                 * @param {*} x the variable to test
+                 * @return {Boolean} true if variable is defined and has a value
+                 */
+                function isDefined(x) {
+                    if ( x === '' || x === null || x === undefined || isNaN(x)) {
+                        return false;
+                    }
+                    return true;
+                }
 
                 /**
                  * get selected value for single select element
@@ -151,7 +205,7 @@
                         value: val,
                         text: txt,
                         index: idx
-                    }
+                    };
                 }
 
                 /**
@@ -167,6 +221,147 @@
                         }
                     }
                 }
+
+                function requestCallback(response) {
+
+                }
+
+                /**
+                 * @param  {Object} options for the request
+                 * @param {Function} callback callback function
+                 * @return {[type]}
+                 */
+                function sendRequest(options, callback) {
+                    var httpRequest = new XMLHttpRequest(),
+                        requestParams,
+                        option,
+                        // response handler
+                        getResponse = function() {
+                            try {
+                              if (httpRequest.readyState === 4) {
+                                if (httpRequest.status === 200) {
+                                  console.log('response', httpRequest.responseText);
+                                  callback(httpRequest.responseText);
+                                } else {
+                                  alert('There was a problem with the request. Request returned ' + httpRequest.status);
+                                }
+                              }
+                            } catch (e) {
+                              alert('Caught Exception: ' + e);
+                            }
+                        };
+                    // set up request data
+                    for (option in options) {
+                        requestParams += option + '=' + options[option];
+                    }
+
+                    // set response handler
+                    httpRequest.onreadystatechange = getResponse;
+                    // open the request
+                    httpRequest.open('POST', requestURL);
+                    // set headers
+                    httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    // open and send request
+                    httpRequest.send(requestParams);
+                }
+
+                pullVideoSelect.addEventListener('change', function() {
+                    pushVideoSelect.setAttribute('disabled', 'disabled');
+                });
+
+                pushVideoSelect.addEventListener('change', function() {
+                    pullVideoSelect.setAttribute('disabled', 'disabled');
+                });
+
+                captureImages.addEventListener('change', function() {
+                    if (captureImages.checked) {
+                        posterdata.value = '';
+                        posterdata.setAttribute('disabled', 'disabled');
+                        thumbnaildata.value = '';
+                        thumbnaildata.setAttribute('disabled', 'disabled');
+                    } else {
+                        posterdata.removeAttribute('disabled', 'disabled');
+                        thumbnaildata.removeAttribute('disabled', 'disabled');
+                    }
+                });
+
+                submit.addEventListener('click', function() {
+                    var selected,
+                        options = {};
+                    if (!isDefined(accountId.value) || !isDefined(clientId.value) || !isDefined(clientSecret.value)) {
+                        alert('Account id, client id, and client secret are required - please enter values and try again');
+                        return;
+                    }
+                    options.account_id = accountId.value;
+                    options.client_id = clientId.value;
+                    options.client_secret = clientSecret.value;
+                    options.request_type = getRadioValue(requestType);
+                    switch (request_type) {
+                        case 'pullReplaceVideo':
+                            if (isDefined(pullReplaceVideoId.value)) {
+                                options.video_id = pullReplaceVideoId.value;
+                            } else {
+                                alert('You must supply a video id for request type to replace a video; please enter a video id and try again');
+                                return;
+                            }
+                            break;
+                        case 'pushReplaceVideo':
+                            if (isDefined(pushReplaceVideoId.value)) {
+                                options.video_id = pushReplaceVideoId.value;
+                            } else {
+                                alert('You must supply a video id for request type to replace a video; please enter a video id and try again');
+                                return;
+                            }
+                            break;
+                        case 'retranscodeVideo':
+                            if (isDefined(retranscodeVideoId.value)) {
+                                options.video_id = retranscodeVideoId.value;
+                            } else {
+                                alert('You must supply a video id for request type to retranscode a video; please enter a video id and try again');
+                                return;
+                            }
+                            break;
+                        case 'retranscodeVideo':
+                            if (isDefined(retranscodeVideoId.value)) {
+                                options.video_id = retranscodeVideoId.value;
+                            } else {
+                                alert('You must supply a video id for request type to retranscode a video; please enter a video id and try again');
+                                return;
+                            }
+                            break;
+                        default:
+                            if (isDefined(getSelectValue(pullVideoSelect).value)) {
+                            selected = getSelectValue(pullVideoSelect);
+                            options.video_url = selected.value;
+                            options.video_name = selected.text;
+                        } else if (isDefined(getSelectValue(pushVideoSelect).value)) {
+                            selected = getSelectValue(pushVideoSelect);
+                            options.video_url = selected.value;
+                            options.video_name = selected.text;
+                        } else {
+                            if (request_type === 'pullNewVideo' || request_type === 'pushNewVideo' || request_type === 'pullReplaceVideo' || request_type === 'pushReplaceVideo') {
+                                alert ('You must select a video to pull or push for this request type; either change the request type or select a video and try again');
+                                return;
+                            }
+                        }
+                        break;
+                    }
+                    if (captureImages.checked) {
+                        capture_images = true;
+                    } else {
+                        if (isDefined(posterdata.value)) {
+                            options.poster = JSON.stringify(JSON.parse(posterdata.value));
+                        }
+                        if (isDefined(thumbnaildata.value)) {
+                            options.thumbnail = JSON.stringify(JSON.parse(thumbnaildata.value));
+                        }
+                    }
+                    if (isDefined(texttracksdata.value)) {
+                        options.text_tracks = JSON.stringify(JSON.parse(texttracksdata.value));
+                    }
+
+                    sendRequest(options, requestCallback);
+                });
             })(window, document);
         </script>
     </body>
