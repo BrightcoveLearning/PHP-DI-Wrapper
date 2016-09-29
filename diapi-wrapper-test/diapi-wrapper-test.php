@@ -1,6 +1,9 @@
 <?php
-require('../bc-diapi.php');
-var_dump($_POST);
-var_dump(isset($_POST));
-$BCDI = new BCDIAPI();
+require 'bc-diapi.php';
+// echo json_encode($_POST);
+// echo 'foo';
+
+$BCDI = new BCDIAPI($_POST['account_id'], $_POST['client_id'], $_POST['client_secret']);
+echo BCDIAPI['account_id'];
+echo BCDI['account_id]
 ?>

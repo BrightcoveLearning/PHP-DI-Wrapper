@@ -70,7 +70,7 @@ class BCDIAPI
     protected $is_pull_request = true;
     protected $job_id = null;
     protected $job_status = null;
-    protected $options['method'] = null;
+    protected $options = null;
     protected $parsed_data = array();
     protected $result_parsed = null;
     protected $show_notices = false;
@@ -81,7 +81,6 @@ class BCDIAPI
     protected $timeout_retry = false;
     protected $token_expires = null;
     protected $unsigned_url = null;
-    protected $options['url'] = null;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
     protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
     protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
@@ -260,8 +259,8 @@ class BCDIAPI
             case 'get_token':
                 $options['url'] = $this->url_oauth;
                 $options['method'] = 'POST';
-                $options'[headers]' = array('Content-type: application/x-www-form-urlencoded');
-                $options'[user_pwd]' = $this->$auth_sting;
+                $options['headers'] = array('Content-type: application/x-www-form-urlencoded');
+                $options['user_pwd'] = $this->$auth_sting;
                 return $this->send_request($url, $options);
                 break;
             case 'create_video':
@@ -439,9 +438,9 @@ class BCDIAPI
 
         curl_setopt($curl, CURLOPT_URL, $options['url']);
         if (isset($options['headers'])) {
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $options['headers']));
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $options['headers']);
         }
-        if ($options['method'] === 'POST'))
+        if ($options['method'] === 'POST') {
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $options['data']);
             if (isset($options['user_pwd'])) {

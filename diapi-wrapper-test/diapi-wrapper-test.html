@@ -185,7 +185,7 @@
                  * @return {Boolean} true if variable is defined and has a value
                  */
                 function isDefined(x) {
-                    if ( x === '' || x === null || x === undefined || isNaN(x)) {
+                    if ( x === '' || x === null || x === undefined) {
                         return false;
                     }
                     return true;
@@ -223,7 +223,7 @@
                 }
 
                 function requestCallback(response) {
-
+                    console.log(JSON.parse(response));
                 }
 
                 /**
@@ -254,7 +254,7 @@
                     for (option in options) {
                         requestParams += option + '=' + options[option];
                     }
-
+                    console.log('requestParams', requestParams);
                     // set response handler
                     httpRequest.onreadystatechange = getResponse;
                     // open the request
@@ -296,7 +296,7 @@
                     options.client_id = clientId.value;
                     options.client_secret = clientSecret.value;
                     options.request_type = getRadioValue(requestType);
-                    switch (request_type) {
+                    switch (options.request_type) {
                         case 'pullReplaceVideo':
                             if (isDefined(pullReplaceVideoId.value)) {
                                 options.video_id = pullReplaceVideoId.value;
@@ -359,7 +359,7 @@
                     if (isDefined(texttracksdata.value)) {
                         options.text_tracks = JSON.stringify(JSON.parse(texttracksdata.value));
                     }
-
+                    console.log('options', options);
                     sendRequest(options, requestCallback);
                 });
             })(window, document);
