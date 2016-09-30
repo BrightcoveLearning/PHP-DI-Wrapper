@@ -133,19 +133,17 @@ class BCDIAPI {
 	 * Adds media (videos, images, text tracks) to the account
 	 * @access Public
 	 * @since 0.1.0
-	 * @param string [$video_name] The video title (either here or in $video_metadata) default: video file name
-	 * @param object [$video_metadata] Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
-	 * @param string [$video_url] URL for the video (for pull-based ingestion; required if $video_file is null)
-	 * @param string [$video_file] video file location (for pull-based ingestion; required if $video_file is null)
-	 * @param string [$profile] Name of the ingest profile to use - if null, default profile for the account will be used
-	 * @param boolean [$capture_images] Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
-	 * @param array [$poster] Video still information - if included, keys are: url (required0; height (optional); width (optional)
-	 * @param array [$thumbnail] thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
-	 * @param array[] [$text_tracks] text tracks information - if included, each object in the array has keys: url (required), srclang (required);
-	kind (optional);
-	label (optional);
-	default (optional)
-	 * @param string[] [$callbacks] array of callback URLs (optional)
+	 * @param object $ingest_options options for the ingest request
+	 * @param string $ingest_options->$video_name The video title (either here or in $video_metadata) default: video file name
+	 * @param object $ingest_options->$video_metadata Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
+	 * @param string $ingest_options->$video_url URL for the video (for pull-based ingestion; required if $video_file is null)
+	 * @param string $ingest_options->$video_file video file location (for pull-based ingestion; required if $video_file is null)
+	 * @param string $ingest_options->$profile Name of the ingest profile to use - if null, default profile for the account will be used
+	 * @param boolean $ingest_options->$capture_images Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
+	 * @param array $ingest_options->$poster Video still information - if included, keys are: url (required0; height (optional); width (optional)
+	 * @param array $ingest_options->$thumbnail thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
+	 * @param array[] $ingest_options->$text_tracks text tracks information - if included, each object in the array has keys: url (required), srclang (required);
+	 * @param string[] $ingest_options->$callbacks array of callback URLs (optional)
 	 * @return object status of the ingest
 	 */
 	public function add_video($ingest_options) {
@@ -184,11 +182,11 @@ class BCDIAPI {
 		if (isset($ingest_options->video_metadata)) {
 			$this->cms_data = $ingest_options->video_metadata;
 		} else {
-			$this->cms_data = array();
+			$this->cms_data = new stdClass();
 		}
-		if (!isset($video_metadata->name)) {
-			if (isset($video_name)) {
-				$this->cms_data['name'] = $video_name;
+		if (!isset($ingest_options->video_metadata->name)) {
+			if (isset($ingest_options->video_name)) {
+				$this->cms_data['name'] = $ingest_options->video_name;
 			} else {
 				$this->cms_data['name'] = $this->file_name;
 			}
@@ -196,6 +194,7 @@ class BCDIAPI {
 		var_dump($this->cms_data);
 		// data in place, make api requests
 		$cms_response   = json_decode($this->make_request('create_video', $this->cms_data));
+		var_dump($cms_response);
 		$this->video_id = $cms_response['id'];
 		if ($this->is_pull_request) {
 			$di_response  = json_decode($this->make_request('ingest_video', $this->di_data));

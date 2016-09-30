@@ -43,7 +43,7 @@ $push_options->text_tracks    = json_decode($text_tracks_data);
 $push_options->callbacks      = json_decode($callbacks_data);
 
 $BCDI = new BCDIAPI($account_id, $client_id, $client_secret);
-// var_dump($BCDI);
+var_dump($pull_options);
 
 // add video via pull request
 
