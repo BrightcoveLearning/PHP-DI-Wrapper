@@ -96,6 +96,7 @@ class BCDIAPI {
 		$this->client_secret = $client_secret;
 		$this->auth_string   = "{$client_id}:{$client_secret}";
 		$this->bit32         = ((string) '99999999999999' == (int) '99999999999999')?false:true;
+		$this->di_data       = new stdClass();
 	}
 
 	/**
@@ -147,42 +148,33 @@ class BCDIAPI {
 	 * @return object status of the ingest
 	 */
 	public function add_video($ingest_options) {
-//         var_dump($ingest_options);
-        // get file name
-        if (isset($ingest_options->video_url)) {
-            $tmp = $ingest_options->video_url;
-        } else if (isset($ingest_options->video_file)) {
-            $this->is_pull_request = false;
-            $tmp                   = $ingest_options->video_file;
-        }
-        $this->file_name = urlencode(array_pop(explode('/', $tmp)));
-        // set up ingest request data
-		$this->di_data              = new stdClass();
+		// get file name
+		if (isset($ingest_options->video_url)) {
+			$tmp = $ingest_options->video_url;
+		} else if (isset($ingest_options->video_file)) {
+			$this->is_pull_request = false;
+			$tmp                   = $ingest_options->video_file;
+		}
+		$this->file_name = urlencode(array_pop(explode('/', $tmp)));
+		// set up ingest request data
 		if (isset($ingest_options->profile)) {
 			$this->di_data->profile = $ingest_options->profile;
 		}
-        var_dump($request_data->poster);
 		if (isset($ingest_options->poster)) {
-			$this->di_data['capture_images'] = false;
-            $this->di_data->poster         = new stdClass();
+			$this->di_data->capture_images = false;
 			$this->di_data->poster         = $ingest_options->poster;
 		}
-        var_dump($this->di_data);
 		if (isset($ingest_options->thumbnail)) {
-            $this->di_data->thumbnail = new stdClass();
 			$this->di_data->thumbnail = $ingest_options->thumbnail;
 		}
 		if (isset($ingest_options->text_tracks)) {
-            $this->di_data->text_tracks = new stdClass();
 			$this->di_data->text_tracks = $ingest_options->text_tracks;
 		}
 		if (isset($ingest_options->video_url)) {
-            $this->di_data->master      = new stdClass();
-            $this->di_data->master->url = $ingest_options->video_url;
+			$this->di_data->master      = new stdClass();
+			$this->di_data->master->url = $ingest_options->video_url;
 		}
-		var_dump($this->di_data);
 
-		// var_dump($ingest_options->video_metadata);
 		// set up CMS request data
 		if (isset($ingest_options->video_metadata)) {
 			$this->cms_data = $ingest_options->video_metadata;
@@ -191,9 +183,9 @@ class BCDIAPI {
 		}
 		if (!isset($ingest_options->video_metadata->name)) {
 			if (isset($ingest_options->video_name)) {
-				$this->cms_data['name'] = $ingest_options->video_name;
+				$this->cms_data->name = $ingest_options->video_name;
 			} else {
-				$this->cms_data['name'] = $this->file_name;
+				$this->cms_data->name = $this->file_name;
 			}
 		}
 		var_dump($this->cms_data);
@@ -203,12 +195,12 @@ class BCDIAPI {
 		$this->video_id = $cms_response['id'];
 		if ($this->is_pull_request) {
 			$di_response  = json_decode($this->make_request('ingest_video', $this->di_data));
-			$this->job_id = $di_response['job_id'];
+			$this->job_id = $di_response->job_id;
 			return json_decode($this->make_request('get_status', null));
 		} else {
 			$s3_response        = json_decode($this->make_request('get_s3urls', null));
-			$this->signed_url   = $s3_response['SignedUrl'];
-			$this->unsigned_url = $s3_response['ApiRequestUrl'];
+			$this->signed_url   = $s3_response->SignedUrl;
+			$this->unsigned_url = $s3_response->ApiRequestUrl;
 		}
 
 	}

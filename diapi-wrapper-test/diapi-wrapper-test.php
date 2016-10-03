@@ -20,12 +20,12 @@ $pull_options->video_url      = 'http://solutions.brightcove.com/bcls/assets/vid
 $pull_options->video_name     = 'Great Blue Heron';
 $pull_options->profile        = 'screencast-1280';
 $pull_options->capture_images = false;
-$pull_options->metadata       = json_decode($video_metadata);
+$pull_options->video_metadata = json_decode($video_metadata);
 $pull_options->poster         = json_decode($poster_data);
 $pull_options->thumbnail      = json_decode($thumbnail_data);
 $pull_options->text_tracks    = json_decode($text_tracks_data);
 $pull_options->callbacks      = json_decode($callbacks_data);
-
+// var_dump($pull_options);
 // push request options
 $push_options = new stdClass();
 
@@ -43,7 +43,6 @@ $push_options->text_tracks    = json_decode($text_tracks_data);
 $push_options->callbacks      = json_decode($callbacks_data);
 
 $BCDI = new BCDIAPI($account_id, $client_id, $client_secret);
-var_dump($pull_options);
 
 // add video via pull request
 
