@@ -255,6 +255,7 @@ class BCDIAPI {
 				return $this->send_request($url, $options);
 				break;
 			case 'create_video':
+				var_dump($request_data);
 				$options['url']      = $this->url_cms.$this->account_id.'/videos';
 				$options['method']   = 'POST';
 				$this->$access_token = $this->get_access_token();
