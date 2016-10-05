@@ -9,13 +9,12 @@ $poster_data      = '{"url": "http://solutions.brightcove.com/bcls/images/Great-
 $thumbnail_data   = '{"url": "http://solutions.brightcove.com/bcls/images/great-blue-heron-thumbnail.png","height": 90,"width": 160}';
 $text_tracks_data = '[{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}]';
 $callbacks_data   = '["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]';
-
+$account_id     = '57838016001';
+$client_id      = 'b10631d3-7597-4be8-b8b5-dce142f81006';
+$client_secret  = 'h1dbPZCMFsloMCiXprlGDvdDR7QXtcw9alyocJ1ShDfLZ5QxqBqb9u_5gGcU6mlyA1PbbG6ABYS1FMDVE4JNDQ';
 // pull request options
 $pull_options = new stdClass();
 
-$pull_options->account_id     = '57838016001';
-$pull_options->client_id      = '553d4903-4547-435d-944c-2c8e2f6abc5d';
-$pull_options->client_secret  = 'ENBQH6pHfJQub7oR0SGCn2Pu_W2SY5QsVw24fK-frXcE6hdTRnJO-0_LBmKZh15rVliIAiECAQF1yBYP_l90gQ';
 $pull_options->video_url      = 'http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4';
 $pull_options->video_name     = 'Great Blue Heron';
 $pull_options->profile        = 'screencast-1280';
@@ -29,9 +28,6 @@ $pull_options->callbacks      = json_decode($callbacks_data);
 // push request options
 $push_options = new stdClass();
 
-$push_options->account_id     = '57838016001';
-$push_options->client_id      = '553d4903-4547-435d-944c-2c8e2f6abc5d';
-$push_options->client_secret  = 'ENBQH6pHfJQub7oR0SGCn2Pu_W2SY5QsVw24fK-frXcE6hdTRnJO-0_LBmKZh15rVliIAiECAQF1yBYP_l90gQ';
 $push_video_path              = '../assets/videos/Great_Blue_Heron.mp4';
 $push_options->video_name     = 'Great Blue Heron';
 $push_options->profile        = 'screencast-1280';
