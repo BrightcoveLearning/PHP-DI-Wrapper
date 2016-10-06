@@ -14,7 +14,6 @@ $client_id      = 'b10631d3-7597-4be8-b8b5-dce142f81006';
 $client_secret  = 'h1dbPZCMFsloMCiXprlGDvdDR7QXtcw9alyocJ1ShDfLZ5QxqBqb9u_5gGcU6mlyA1PbbG6ABYS1FMDVE4JNDQ';
 // pull request options
 $pull_options = new stdClass();
-var_dump('foo');
 $pull_options->video_url      = 'http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4';
 $pull_options->video_name     = 'Great Blue Heron';
 $pull_options->profile        = 'screencast-1280';
@@ -24,8 +23,6 @@ $pull_options->poster         = json_decode($poster_data);
 $pull_options->thumbnail      = json_decode($thumbnail_data);
 $pull_options->text_tracks    = json_decode($text_tracks_data);
 $pull_options->callbacks      = json_decode($callbacks_data);
-var_dump($pull_options);
-var_dump('<hr>');
 // push request options
 $push_options = new stdClass();
 
