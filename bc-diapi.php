@@ -64,11 +64,11 @@ class BCDIAPI {
 	protected $current_request  = null;
 	protected $di_data          = null;
 	protected $file_name        = null;
-	protected $is_pull_request  = true;
 	protected $job_id           = null;
 	protected $job_status       = null;
 	protected $options          = null;
 	protected $parsed_data      = null;
+	protected $request_type = 'pull';
 	protected $result_parsed    = null;
 	protected $show_notices     = false;
 	protected $signed_url       = null;
@@ -93,7 +93,7 @@ class BCDIAPI {
 	 * @param string [$client_secret] The write API token for the Brightcove account (required)
 	 */
 	public function __construct($account_data = null) {
-		$this->account_data = $account_data;
+		$this->account_data = json_decode($account_data);
 		$this->account_id    = $accout_data->account_id;
 		$this->client_id     = $accout_data->client_id;
 		$this->client_secret = $accout_data->client_secret;
@@ -140,60 +140,37 @@ class BCDIAPI {
 	 * Adds media (videos, images, text tracks) to the account
 	 * @access Public
 	 * @since 0.1.0
-	 * @param object $ingest_options options for the ingest request
-	 * @param string $ingest_options->$video_name The video title (either here or in $video_metadata) default: video file name
-	 * @param object $ingest_options->$video_metadata Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
-	 * @param string $ingest_options->$video_url URL for the video (for pull-based ingestion; required if $video_file is null)
-	 * @param string $ingest_options->$video_file video file location (for pull-based ingestion; required if $video_file is null)
-	 * @param string $ingest_options->$profile Name of the ingest profile to use - if null, default profile for the account will be used
-	 * @param boolean $ingest_options->$capture_images Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
-	 * @param array $ingest_options->$poster Video still information - if included, keys are: url (required0; height (optional); width (optional)
-	 * @param array $ingest_options->$thumbnail thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
-	 * @param array[] $ingest_options->$text_tracks text tracks information - if included, each object in the array has keys: url (required), srclang (required), kind (optional), label (optional), default (optional)
-	 * @param string[] $ingest_options->$callbacks array of callback URLs (optional)
+	 * @param object $request_options options for the ingest request
+	 * @param string $request_options->$video_name The video title (either here or in $video_metadata) default: video file name
+	 * @param object $request_options->$video_metadata Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
+	 * @param string $request_options->$video_url URL for the video (for pull-based ingestion; required if $video_file is null)
+	 * @param string $request_options->$video_file video file location (for pull-based ingestion; required if $video_file is null)
+	 * @param string $request_options->$profile Name of the ingest profile to use - if null, default profile for the account will be used
+	 * @param boolean $request_options->$capture_images Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
+	 * @param array $request_options->$poster Video still information - if included, keys are: url (required0; height (optional); width (optional)
+	 * @param array $request_options->$thumbnail thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
+	 * @param array[] $request_options->$text_tracks text tracks information - if included, each object in the array has keys: url (required), srclang (required), kind (optional), label (optional), default (optional)
+	 * @param string[] $request_options->$callbacks array of callback URLs (optional)
 	 * @return object status of the ingest
 	 */
-	public function add_video($ingest_options) {
-		// get file name
-		if (isset($ingest_options->video_url)) {
-			$tmp = $ingest_options->video_url;
-		} else if (isset($ingest_options->video_file)) {
-			$this->is_pull_request = false;
-			$tmp                   = $ingest_options->video_file;
-		}
-		$this->file_name = urlencode(array_pop(explode('/', $tmp)));
-		// set up ingest request data
-		if (isset($ingest_options->profile)) {
-			$this->di_data->profile = $ingest_options->profile;
-		}
-		if (isset($ingest_options->poster)) {
-			$this->di_data->{'capture-images'}  = false;
-			$this->di_data->poster         = $ingest_options->poster;
-		}
-		if (isset($ingest_options->thumbnail)) {
-			$this->di_data->thumbnail = $ingest_options->thumbnail;
-		}
-		if (isset($ingest_options->text_tracks)) {
-			$this->di_data->text_tracks = $ingest_options->text_tracks;
-		}
-		if (isset($ingest_options->video_url)) {
-			$this->di_data->master      = new stdClass();
-			$this->di_data->master->url = $ingest_options->video_url;
-		}
-
-		// set up CMS request data
-		if (isset($ingest_options->video_metadata)) {
-			$this->cms_data = $ingest_options->video_metadata;
-		} else {
-			$this->cms_data = new stdClass();
-		}
-		if (!isset($ingest_options->video_metadata->name)) {
-			if (isset($ingest_options->video_name)) {
-				$this->cms_data->name = $ingest_options->video_name;
-			} else {
-				$this->cms_data->name = $this->file_name;
+	public function add_video($ingest_json) {
+		$request_options = json_decode($ingest_json);
+		$di_options = json_decode($request_options->ingest_options);
+		if (isset($request_options->video_id)) {
+			// this is a retranscode or replace job
+			if (isset($request_options->file_path)) {
+				
 			}
 		}
+		// get file name if this is push-based
+		if (isset($request_options->video_path)) {
+			$this->is_pull_request = false;
+			$this->file_name = urlencode(array_pop(explode('/', $request_options->video_path)));
+		}
+		// set up CMS request data
+		$this->cms_data = $request_options->video_options;
+		// set up ingest request data
+		$this->di_data = $request_options->ingest_options;
 		// data in place, make api requests
 		$this->make_request('create_video', $this->cms_data);
 		if ($this->is_pull_request) {
