@@ -55,6 +55,7 @@ class BCDIAPI {
 	const ERROR_WRITE_API_TRANSACTION_FAILED    = 10;
 
 	protected $access_token     = null;
+	protected $account_data = null;
 	protected $account_id       = null;
 	protected $bit32            = false;
 	protected $client_id        = null;
@@ -91,10 +92,11 @@ class BCDIAPI {
 	 * @param string [$client_id] The read API token for the Brightcove account (required)
 	 * @param string [$client_secret] The write API token for the Brightcove account (required)
 	 */
-	public function __construct($account_id = null, $client_id = null, $client_secret = null) {
-		$this->account_id    = $account_id;
-		$this->client_id     = $client_id;
-		$this->client_secret = $client_secret;
+	public function __construct($account_data = null) {
+		$this->account_data = $account_data;
+		$this->account_id    = $accout_data->account_id;
+		$this->client_id     = $accout_data->client_id;
+		$this->client_secret = $accout_data->client_secret;
 		$this->auth_string   = $this->client_id.':'.$this->client_secret;
 		$this->bit32         = ((string) '99999999999999' == (int) '99999999999999')?false:true;
 		$this->di_data       = new stdClass();
@@ -280,7 +282,7 @@ class BCDIAPI {
 					'Content-type: application/json',
 					'Authorization: Bearer '.$this->access_token
 				);
-				var_dump($options);
+				var_dump($options['data']);
 				var_dump('<hr>');
 				$this->responses->di = $this->send_request($options);
 				$this->job_id = $this->responses->di->id;
@@ -293,8 +295,8 @@ class BCDIAPI {
 					'Content-type: application/json',
 					'Authorization: Bearer '.$this->access_token
 				);
-				var_dump($options);
-				var_dump('<hr>');
+				// var_dump($options);
+				// var_dump('<hr>');
 				$this->responses->status = $this->send_request($options);
 				break;
 			default:
