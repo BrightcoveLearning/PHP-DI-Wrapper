@@ -154,12 +154,7 @@ class BCDIAPI
      * @param object   $ingest_options                  options for the ingest request
      * @param object   $ingest_options->$video_options Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
      * @param string   $ingest_options->$video_file     video file location (for push-based ingestion; required if assets will be uploaded using the source file upload API)
-     * @param string   $ingest_options->$profile        Name of the ingest profile to use - if null, default profile for the account will be used
-     * @param bool     $ingest_options->$capture_images Whether Video Cloud should capture images for the video still and thumbnail during trancoding - should be set to false if the poster and thumbnail are provided
-     * @param array    $ingest_options->$poster         Video still information - if included, keys are: url (required0; height (optional); width (optional)
-     * @param array    $ingest_options->$thumbnail      thumbnail information - if included, keys are: url (required0; height (optional); width (optional)
-     * @param array[]  $ingest_options->$text_tracks    text tracks information - if included, each object in the array has keys: url (required), srclang (required), kind (optional), label (optional), default (optional)
-     * @param string[] $ingest_options->$callbacks      array of callback URLs (optional)
+     * @param string  $ingest_options->$video_id   video_id for a replace or retranscode request (optional)
      *
      * @return object status of the ingest
      */
@@ -190,7 +185,8 @@ class BCDIAPI
 	            $this->make_request('ingest_video', $this->di_data);
 	        } else {
 	            // push request
-	            // get filenames
+	            // get filenames and S3 paths
+	        	$this->responses->s3 = array();
 	        	foreach ($files as $name => $value) {
 	        		$file_data = new stdClass();
 	        		$file_name = $name.'_name';
