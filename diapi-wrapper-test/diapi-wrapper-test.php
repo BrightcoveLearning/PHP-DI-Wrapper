@@ -46,7 +46,7 @@ $push_options->ingest_options = $injest_data;
 $BCDI = new BCDIAPI($account_data);
 
 // make a request - change data param to test other operations
-$BCDI->ingest_request($retranscode_options);
+$BCDI->ingest_request($push_options);
 echo '<h3>CMS Response (will be NULL except for new video additions)</h3>';
 var_dump($BCDI->responses->cms);
 echo '<h3>DI Response</h3>';

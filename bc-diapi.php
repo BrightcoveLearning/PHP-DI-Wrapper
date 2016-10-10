@@ -192,7 +192,13 @@ class BCDIAPI
 	        		$file_name = $name.'_name';
 	        		$file_data->$file_name = urlencode(array_pop(explode('/', $value)));
 	        		$file_data->$name = $value;
+	        	var_dump($file_data);
+	        	var_dump('<hr>');
+	        		$s3_response = json_decode(make_request('get_s3urls'));
+	        		array_push($this->responses->s3, $s3_response);
 	        	}
+	        	var_dump($this->responses->s3);
+	        	var_dump('<hr>');
 	        }
         } else {
         	// existing video
@@ -436,8 +442,8 @@ class BCDIAPI
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $response = curl_exec($curl);
-        var_dump($response);
-        var_dump(' <hr> ');
+        // var_dump($response);
+        // var_dump(' <hr> ');
         // $this->api_calls++;
 
         $curl_error = null;
