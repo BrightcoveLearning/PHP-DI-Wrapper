@@ -6,8 +6,11 @@ require 'bc-diapi.php';
 
 // to ingest new video (pull-based)
 $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An original nature video","custom_fields": {"subject": "Birds"},"tags": ["nature","bird"]}';
+// pull ingest options
+$pull_ingest_data = '{"profile": "BoltIngestProfile","capture-images": false,"poster": {"url": "http://solutions.brightcove.com/bcls/images/Great-Blue-Heron.png","height": 360,"width": 640},"thumbnail": {"url": "http://solutions.brightcove.com/bcls/images/great-blue-heron-thumbnail.png","height": 90,"width": 160},"text_tracks": [{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}],"master": {"url": "http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4"},"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
 
-$ingest_data = '{"profile": "BoltIngestProfile","capture-images": false,"poster": {"url": "http://solutions.brightcove.com/bcls/images/Great-Blue-Heron.png","height": 360,"width": 640},"thumbnail": {"url": "http://solutions.brightcove.com/bcls/images/great-blue-heron-thumbnail.png","height": 90,"width": 160},"text_tracks": [{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}],"master": {"url": "http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4"},"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+// push ingest data
+$push_ingest_data = '{"profile": "BoltIngestProfile","capture-images": true,"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
 
 // for retranscode test
 $retranscode_data = '{"profile": "BoltIngestProfile","capture-images": false,"poster": {"url": "http://solutions.brightcove.com/bcls/images/Great-Blue-Heron.png","height": 360,"width": 640},"thumbnail": {"url": "http://solutions.brightcove.com/bcls/images/great-blue-heron-thumbnail.png","height": 90,"width": 160},"text_tracks": [{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}],"master": { "use_archived_master": true },"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
@@ -22,13 +25,13 @@ $file_paths_full = '{"video": "../assets/videos/Great_Blue_Heron.mp4","poster": 
 // pull request options
 $pull_options = new stdClass();
 $pull_options->video_options = $video_metadata;
-$pull_options->ingest_options = $ingest_data;
+$pull_options->ingest_options = $pull_ingest_data;
 
 // replace request options
 $replace_options = new stdClass();
 $replace_options->video_id = '5163084054001';
 $replace_options->video_options = $video_metadata;
-$replace_options->ingest_options = $ingest_data;
+$replace_options->ingest_options = $pull_ingest_data;
 
 // retranscode request options
 $retranscode_options = new stdClass();
@@ -40,7 +43,7 @@ $retranscode_options->ingest_options = $retranscode_data;
 $push_options = new stdClass();
 $push_options->file_paths = $file_paths;
 $push_options->video_options = $video_metadata;
-$push_options->ingest_options = $injest_data;
+$push_options->ingest_options = $push_injest_data;
 
 // instantiate the wrapper
 $BCDI = new BCDIAPI($account_data);

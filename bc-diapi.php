@@ -190,15 +190,31 @@ class BCDIAPI
 	        	foreach ($files as $name => $value) {
 	        		$file_data = new stdClass();
 	        		$file_name = $name.'_name';
-	        		$file_data->$file_name = urlencode(array_pop(explode('/', $value)));
-	        		$file_data->$name = $value;
-	        	var_dump($file_data);
-	        	var_dump('<hr>');
-	        		$s3_response = json_decode(make_request('get_s3urls'));
+	        		$file_data->type = $name;
+	        		$file_data->file_name = urlencode(array_pop(explode('/', $value)));
+	        		$file_data->path = $value;
+	        		$s3_response = $this->make_request('get_s3urls', $file_data);
+	        		$file_data->api_request_url = $s3_response->api_request_url;
+	        		$file_data->signed_url = $s3_response->signed_url;
 	        		array_push($this->responses->s3, $s3_response);
+	        		switch ($file_data->type) {
+	        			case 'video':
+	        				di_decoded->master = new stdClass();
+	        				di_decoded->master->url = $file_data->api_request_url;
+	        				break;
+	        			case 'poster':
+	        				di_decoded->poster = new stdClass();
+	        				di_decoded->poster->url = $file_data->api_request_url;
+	        				break;
+	        			case 'thumbnail':
+	        				di_decoded->thumbnail = new stdClass();
+	        				di_decoded->thumbnail->url = $file_data->api_request_url;
+	        				break;
+	        			default:
+	        				# code...
+	        				break;
+	        		}
 	        	}
-	        	var_dump($this->responses->s3);
-	        	var_dump('<hr>');
 	        }
         } else {
         	// existing video
@@ -243,9 +259,7 @@ class BCDIAPI
     {
         $this->timeout_current = 0;
         $options = array();
-        // var_dump($request_data);
-        // var_dump('<hr>');
-        if (isset($request_data)) {
+        if (isset($request_data) && $call !== 'get_s3urls') {
             $options['data'] = $request_data;
         } else {
             $options['data'] = null;
@@ -273,15 +287,14 @@ class BCDIAPI
                 $this->video_id = $this->responses->cms->id;
                 break;
             case 'get_s3urls':
-                $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/upload-urls/'.$this->file_name;
+                $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/upload-urls/'.$request_data->file_name;
                 $options['method'] = 'GET';
                 $this->get_access_token();
                 $options['headers'] = array(
-                    'Content-type: application/json',
                     'Authorization: Bearer '.$this->access_token,
                 );
-
-                return $this->send_request($options);
+                $response = $this->send_request($options);
+                return $response;
                 break;
             case 'put_video':
                 $options['url'] = $this->signed_url;
