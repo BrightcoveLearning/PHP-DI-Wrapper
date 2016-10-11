@@ -20,7 +20,8 @@ $account_data = '{"client_secret": "h1dbPZCMFsloMCiXprlGDvdDR7QXtcw9alyocJ1ShDfL
 
 // for push-based ingest
 $file_paths = '{"video": "../assets/videos/Great_Blue_Heron.mp4"}';
-$file_paths_full = '{"video": "../assets/videos/Great_Blue_Heron.mp4","poster": "../assets/images/Great-Blue-Heron.png","thumbnail": "../assets/images/great-blue-heron-thumbnail.png","text_tracks": "../assets/vtt/sample.vtt"}';
+$file_paths_full = '{"video": "../assets/videos/Great_Blue_Heron.mp4","poster": "../assets/images/Great-Blue-Heron.png","thumbnail": "../assets/images/great-blue-heron-thumbnail.png"}';
+$text_tracks = '[{"path": "../assets/vtt/sample.vtt", "srclang": "en","kind": "captions","label": "EN","default": true}]';
 
 // pull request options
 $pull_options = new stdClass();

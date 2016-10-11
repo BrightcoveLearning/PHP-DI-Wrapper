@@ -197,24 +197,28 @@ class BCDIAPI
 	        		$file_data->api_request_url = $s3_response->api_request_url;
 	        		$file_data->signed_url = $s3_response->signed_url;
 	        		array_push($this->responses->s3, $s3_response);
+	        		// push the file to S3
+	        		
 	        		switch ($file_data->type) {
 	        			case 'video':
-	        				di_decoded->master = new stdClass();
-	        				di_decoded->master->url = $file_data->api_request_url;
+	        				$di_decoded->master = new stdClass();
+	        				$di_decoded->master->url = $file_data->api_request_url;
 	        				break;
 	        			case 'poster':
-	        				di_decoded->poster = new stdClass();
-	        				di_decoded->poster->url = $file_data->api_request_url;
+	        				$di_decoded->poster = new stdClass();
+	        				$di_decoded->poster->url = $file_data->api_request_url;
 	        				break;
 	        			case 'thumbnail':
-	        				di_decoded->thumbnail = new stdClass();
-	        				di_decoded->thumbnail->url = $file_data->api_request_url;
+	        				$di_decoded->thumbnail = new stdClass();
+	        				$di_decoded->thumbnail->url = $file_data->api_request_url;
 	        				break;
 	        			default:
 	        				# code...
 	        				break;
 	        		}
 	        	}
+	        	// now update the ingest data
+	        	$this->di_data = json_encode($di_decoded);
 	        }
         } else {
         	// existing video
