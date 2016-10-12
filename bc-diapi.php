@@ -36,7 +36,20 @@
  * CONVENIENCE AND ANY USE IS SOLELY AT YOUR OWN RISK.  NO MAINTENANCE AND/OR
  * SUPPORT OF ANY KIND IS PROVIDED FOR THE SOFTWARE.
  */
-require 'vendor/autoload.php';
+
+// AWS SDK (for push ingests)
+require 'vendor/aws-autoloader.php';
+
+use Aws\S3\S3Client;
+
+// Instantiate an Amazon S3 client.
+$s3 = new S3Client([
+    'version' => 'latest',
+    'region'  => 'us-east-2'
+]);
+var_dump($s3);
+var_dump('<hr>');
+
 
 class BCDIAPI
 {
@@ -198,7 +211,8 @@ class BCDIAPI
 	        		// get the S3 urls
 	        		$s3_response = $this->make_request('get_s3urls', $file_data);
 	        		$file_data->api_request_url = $s3_response->api_request_url;
-	        		$file_data->signed_url = $s3_response->signed_url;
+	        		$file_data->s3 = $s3_response;
+	        		// make the responses available to the user for debugging purposes
 	        		array_push($this->responses->s3, $s3_response);
 	        		// push the file to S3
 	        		$put_files_response = $this->make_request('put_files', $file_data);
@@ -416,29 +430,28 @@ class BCDIAPI
     }
 
     /**
-     * Sends data to the API.
+     * Sends file to the S3 bucket.
      *
      * @since 0.1.0
      *
-     * @param array [$request] The data to send
+     * @param array [$options] Options include the S3 bucket information and the file path
      * @param bool [$return_json] Whether we should return any data or not
      *
      * @return object An object containing all API return data
      */
-    protected function putData($request, $return_json = true)
+    protected function put_file($options)
     {
-        $response = $this->curlRequest($request, false);
-        var_dump($response);
-        var_dump('<hr>');
-        if ($return_json) {
-            $response_object = json_decode(preg_replace('/[[:cntrl:]]/', '', $response));
-
-            if (!isset($response_object->result)) {
-                throw new BCDIAPIApiError($this, self::ERROR_API_ERROR, $response_object);
-            }
-
-            return $response_object;
-        }
+    	// Upload a publicly accessible file. The file size and type are determined by the SDK.
+		try {
+		    $s3->putObject([
+		        'Bucket' => $options->s3->bucket,
+		        'Key'    => $options->s3->object_key,
+		        'Body'   => fopen($options->path, 'r'),
+		        'ACL'    => 'public-read'
+		    ]);
+		} catch (Aws\Exception\S3Exception $e) {
+		    echo "There was an error uploading the file ".$options->path." .\n";
+		}
     }
 
     /**
