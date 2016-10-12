@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Brightcove PHP Dynamic Ingest API Wrapper 0.1.0 (October 2016).
  *
@@ -37,6 +36,8 @@
  * CONVENIENCE AND ANY USE IS SOLELY AT YOUR OWN RISK.  NO MAINTENANCE AND/OR
  * SUPPORT OF ANY KIND IS PROVIDED FOR THE SOFTWARE.
  */
+require 'vendor/autoload.php';
+
 class BCDIAPI
 {
     const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
@@ -187,18 +188,21 @@ class BCDIAPI
 	            // push request
 	            // get filenames and S3 paths
 	        	$this->responses->s3 = array();
+	        	$this->responses->put_files = array();
 	        	foreach ($files as $name => $value) {
 	        		$file_data = new stdClass();
 	        		$file_name = $name.'_name';
 	        		$file_data->type = $name;
 	        		$file_data->file_name = urlencode(array_pop(explode('/', $value)));
 	        		$file_data->path = $value;
+	        		// get the S3 urls
 	        		$s3_response = $this->make_request('get_s3urls', $file_data);
 	        		$file_data->api_request_url = $s3_response->api_request_url;
 	        		$file_data->signed_url = $s3_response->signed_url;
 	        		array_push($this->responses->s3, $s3_response);
 	        		// push the file to S3
-	        		
+	        		$put_files_response = $this->make_request('put_files', $file_data);
+	        		array_push($this->responses->put_files, $put_files_response);
 	        		switch ($file_data->type) {
 	        			case 'video':
 	        				$di_decoded->master = new stdClass();
@@ -213,7 +217,7 @@ class BCDIAPI
 	        				$di_decoded->thumbnail->url = $file_data->api_request_url;
 	        				break;
 	        			default:
-	        				# code...
+	        				// should never get here TODO throw an error
 	        				break;
 	        		}
 	        	}
@@ -301,8 +305,13 @@ class BCDIAPI
                 return $response;
                 break;
             case 'put_video':
-                $options['url'] = $this->signed_url;
+                $options['url'] = $request_data->signed_url;
+                $options['data'] = $request_data->path;
                 $options['method'] = 'PUT';
+                $response = $this->send_request($options);
+                var_dump($response);
+                var_dump('<hr>');
+                return $response;
                 break;
             case 'ingest_video':
                 $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/ingest-requests';
@@ -419,7 +428,8 @@ class BCDIAPI
     protected function putData($request, $return_json = true)
     {
         $response = $this->curlRequest($request, false);
-
+        var_dump($response);
+        var_dump('<hr>');
         if ($return_json) {
             $response_object = json_decode(preg_replace('/[[:cntrl:]]/', '', $response));
 
