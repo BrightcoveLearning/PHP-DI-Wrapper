@@ -45,10 +45,8 @@ use Aws\S3\S3Client;
 // Instantiate an Amazon S3 client.
 $s3 = new S3Client([
     'version' => 'latest',
-    'region'  => 'us-east-2'
+    'region'  => 'us-east-1'
 ]);
-var_dump($s3);
-var_dump('<hr>');
 
 
 class BCDIAPI
@@ -214,13 +212,12 @@ class BCDIAPI
 	        		$file_data->s3 = $s3_response;
 	        		// make the responses available to the user for debugging purposes
 	        		array_push($this->responses->s3, $s3_response);
-	        		// push the file to S3
-	        		$put_files_response = $this->make_request('put_files', $file_data);
 	        		array_push($this->responses->put_files, $put_files_response);
 	        		switch ($file_data->type) {
 	        			case 'video':
 	        				$di_decoded->master = new stdClass();
 	        				$di_decoded->master->url = $file_data->api_request_url;
+	        				$file_data->s3->content
 	        				break;
 	        			case 'poster':
 	        				$di_decoded->poster = new stdClass();
@@ -234,6 +231,8 @@ class BCDIAPI
 	        				// should never get here TODO throw an error
 	        				break;
 	        		}
+	        		// push the file to S3
+	        		$this->make_request('put_files', $file_data);
 	        	}
 	        	// now update the ingest data
 	        	$this->di_data = json_encode($di_decoded);
@@ -318,14 +317,16 @@ class BCDIAPI
                 $response = $this->send_request($options);
                 return $response;
                 break;
-            case 'put_video':
-                $options['url'] = $request_data->signed_url;
-                $options['data'] = $request_data->path;
-                $options['method'] = 'PUT';
-                $response = $this->send_request($options);
-                var_dump($response);
-                var_dump('<hr>');
-                return $response;
+            case 'put_files':
+                $params = [
+				    'Bucket' => $request_data->s3->bucket,
+				    'credentials' => array(
+				        'key'    => $request_data->s3->access_key_id,
+				        'secret' => $request_data->s3->secret_access_key,
+				    ),
+				    'ContentType' => 'image/jpeg',
+				    'Body'        => ''
+				];
                 break;
             case 'ingest_video':
                 $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/ingest-requests';
