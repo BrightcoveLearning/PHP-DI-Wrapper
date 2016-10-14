@@ -41,6 +41,8 @@
 require 'vendor/aws-autoloader.php';
 
 use Aws\S3\S3Client;
+use Aws\S3\MultipartUploader;
+use Aws\Exception\MultipartUploadException;
 
 // Instantiate an Amazon S3 client.
 $s3 = new S3Client([
@@ -322,21 +324,8 @@ class BCDIAPI
                 return $response;
                 break;
             case 'put_files':
-                $params = [
-				    'Bucket' => $request_data->s3->bucket,
-				    'Key' => $request_data->s3->object_key,
-				    'credentials' => array(
-				        'key'    => $request_data->s3->access_key_id,
-				        'secret' => $request_data->s3->secret_access_key,
-				        'token'	 => $request_data->s3->session_token
-				    ),
-				    'ContentType' => $request_data->s3->ContentType,
-				    'Body'        => fopen($request_data->path, 'r')
-				];
-            	    var_dump($params);
-	        		var_dump('<hr>');
-				$result = $s3Client->putObject($params);
-            	    var_dump($results);
+                $response = $this->putFileToS3($request_data);
+            	    var_dump($result);
 	        		var_dump('<hr>');
 				return $result;
                 break;
@@ -406,13 +395,6 @@ class BCDIAPI
      */
     protected function send_request($options = null)
     {
-
-        // $this->timeout_current++;
-
-        // if (!isset($this->client_id) || !isset($this->client_secret)) {
-        // 	throw new BCDIAPITokenError($this, self::ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED);
-        // }
-
         $response = $this->curlRequest($options);
 
         if ($response && $response != 'null') {
@@ -442,30 +424,6 @@ class BCDIAPI
         }
     }
 
-    /**
-     * Sends file to the S3 bucket.
-     *
-     * @since 0.1.0
-     *
-     * @param array [$options] Options include the S3 bucket information and the file path
-     * @param bool [$return_json] Whether we should return any data or not
-     *
-     * @return object An object containing all API return data
-     */
-    protected function put_file($options)
-    {
-    	// Upload a publicly accessible file. The file size and type are determined by the SDK.
-		try {
-		    $s3->putObject([
-		        'Bucket' => $options->s3->bucket,
-		        'Key'    => $options->s3->object_key,
-		        'Body'   => fopen($options->path, 'r'),
-		        'ACL'    => 'public-read'
-		    ]);
-		} catch (Aws\Exception\S3Exception $e) {
-		    echo "There was an error uploading the file ".$options->path." .\n";
-		}
-    }
 
     /**
      * Makes a cURL request.
@@ -495,9 +453,6 @@ class BCDIAPI
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $response = curl_exec($curl);
-        // var_dump($response);
-        // var_dump(' <hr> ');
-        // $this->api_calls++;
 
         $curl_error = null;
 
@@ -508,14 +463,32 @@ class BCDIAPI
         curl_close($curl);
 
         if ($curl_error !== null) {
-            if ($get_request) {
-                throw new BCDIAPITransactionError($this, self::ERROR_READ_API_TRANSACTION_FAILED, $curl_error);
-            } else {
-                throw new BCDIAPITransactionError($this, self::ERROR_WRITE_API_TRANSACTION_FAILED, $curl_error);
-            }
+        	// TODO
         }
 
         return $this->bit32clean($response);
+    }
+
+    protected function putFileToS3($request_data) {
+    	$params = array(
+		    'bucket' => 'your-bucket',
+		    'key'    => 'object_key',
+		    'credentials' => array(
+	        'key'    => $request_data->s3->object_key,
+	        'secret' => $request_data->s3->secret_access_key,
+	        'token'	 => $request_data->s3->session_token
+	        )
+        );
+    	$uploader = new MultipartUploader($s3, $request_data->path, $params);
+    	var_dump($uploader);
+    	var_dump('<hr>');
+
+		try {
+		    $result = $uploader->upload();
+		    return $result;
+		} catch (MultipartUploadException $e) {
+		    echo $e->getMessage() . "\n";
+		}
     }
 
     /**
@@ -552,20 +525,6 @@ class BCDIAPI
         }
     }
 
-    /**
-     * Returns the JavaScript version of the player embed code.
-     *
-     * @since 0.2.2
-     * @deprecated 1.2.0
-     *
-     * @return string The embed code
-     */
-    public function embed($a = null, $b = null, $c = null, $d = null, $e = null)
-    {
-        throw new BCDIAPIDeprecated($this, self::ERROR_DEPRECATED);
-
-        return false;
-    }
 
     /**
      * Converts an error code into a textual representation.
