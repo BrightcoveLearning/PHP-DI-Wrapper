@@ -163,10 +163,10 @@ class BCDIAPI
      *
      * @since 0.1.0
      *
-     * @param object   $ingest_options                  options for the ingest request
+     * @param object   $ingest_options options for the ingest request
      * @param object   $ingest_options->$video_options Metadata for the video - see [Dyanamic Ingest API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object)
-     * @param string   $ingest_options->$video_file     video file location (for push-based ingestion; required if assets will be uploaded using the source file upload API)
-     * @param string  $ingest_options->$video_id   video_id for a replace or retranscode request (optional)
+     * @param string   $ingest_options->$video_file video file location (for push-based ingestion; required if assets will be uploaded using the source file upload API)
+     * @param string  $ingest_options->$video_id video_id for a replace or retranscode request (optional)
      *
      * @return object status of the ingest
      */
@@ -217,22 +217,26 @@ class BCDIAPI
 	        			case 'video':
 	        				$di_decoded->master = new stdClass();
 	        				$di_decoded->master->url = $file_data->api_request_url;
-	        				$file_data->s3->content
+	        				$file_data->s3->ContentType = 'video/mp4';
 	        				break;
 	        			case 'poster':
 	        				$di_decoded->poster = new stdClass();
 	        				$di_decoded->poster->url = $file_data->api_request_url;
+	        				$file_data->s3->ContentType = 'image/png';
 	        				break;
 	        			case 'thumbnail':
 	        				$di_decoded->thumbnail = new stdClass();
 	        				$di_decoded->thumbnail->url = $file_data->api_request_url;
+	        				$file_data->s3->ContentType = 'image/png';
 	        				break;
 	        			default:
 	        				// should never get here TODO throw an error
 	        				break;
 	        		}
 	        		// push the file to S3
-	        		$this->make_request('put_files', $file_data);
+	        		$response = $this->make_request('put_files', $file_data);
+	        		var_dump($response);
+	        		var_dump('<hr>');
 	        	}
 	        	// now update the ingest data
 	        	$this->di_data = json_encode($di_decoded);
@@ -320,13 +324,21 @@ class BCDIAPI
             case 'put_files':
                 $params = [
 				    'Bucket' => $request_data->s3->bucket,
+				    'Key' => $request_data->s3->object_key,
 				    'credentials' => array(
 				        'key'    => $request_data->s3->access_key_id,
 				        'secret' => $request_data->s3->secret_access_key,
+				        'token'	 => $request_data->s3->session_token
 				    ),
-				    'ContentType' => 'image/jpeg',
-				    'Body'        => ''
+				    'ContentType' => $request_data->s3->ContentType,
+				    'Body'        => fopen($request_data->path, 'r')
 				];
+            	    var_dump($params);
+	        		var_dump('<hr>');
+				$result = $s3Client->putObject($params);
+            	    var_dump($results);
+	        		var_dump('<hr>');
+				return $result;
                 break;
             case 'ingest_video':
                 $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/ingest-requests';
