@@ -51,7 +51,7 @@ class BCDIAPI
     const ERROR_API_ERROR = 1;
     const ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED = 9;
     const ERROR_CLIENT_SECRET_NOT_PROVIDED = 11;
-    const ERROR_DEPRECATED = 99;
+    const ERROR_NO_VIDEO_ID = 14;
     const ERROR_DTO_DOES_NOT_EXIST = 12;
     const ERROR_INVALID_FILE_TYPE = 5;
     const ERROR_INVALID_JSON = 3;
@@ -163,7 +163,10 @@ class BCDIAPI
      */
     public function ingest_request($ingest_options)
     {
-        $this->cms_data = $ingest_options->video_options;
+        if (isset($ingest_options->video_options)) {
+	        $this->cms_data = $ingest_options->video_options;
+        	$this->is_new_video = true;
+        } 
         $this->di_data = $ingest_options->ingest_options;
         $cms_decoded = json_decode($this->cms_data);
         $di_decoded = json_decode($this->di_data);
@@ -594,10 +597,10 @@ class BCDIAPI
                 return 'Write API transaction failed';
                 break;
             case self::ERROR_CLIENT_SECRET_NOT_PROVIDED:
-                return 'Write token not provided';
+                return 'Client secret not provided';
                 break;
-            case self::ERROR_DEPRECATED:
-                return 'Access to this method or property has been deprecated';
+            case self::ERROR_NO_VIDEO_ID:
+                return 'If you are not ingesting a new video, a video id is required';
                 break;
         }
     }
