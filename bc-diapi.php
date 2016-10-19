@@ -44,12 +44,6 @@ use Aws\S3\S3Client;
 use Aws\S3\MultipartUploader;
 use Aws\Exception\MultipartUploadException;
 
-// Instantiate an Amazon S3 client.
-$s3 = new S3Client([
-    'version' => 'latest',
-    'region'  => 'us-east-1'
-]);
-
 
 class BCDIAPI
 {
@@ -75,9 +69,7 @@ class BCDIAPI
     protected $client_id = null;
     protected $client_secret = null;
     protected $cms_data = null;
-    protected $current_request = null;
     protected $di_data = null;
-    protected $file_name = null;
     protected $is_new_video = true;
     protected $is_pull_request = true;
     protected $job_id = null;
@@ -85,14 +77,10 @@ class BCDIAPI
     protected $options = null;
     protected $parsed_data = null;
     protected $result_parsed = null;
-    protected $show_notices = false;
-    protected $signed_url = null;
-    protected $timeout_attempts = 100;
-    protected $timeout_current = 0;
-    protected $timeout_delay = 1;
-    protected $timeout_retry = false;
+    protected $s3 = null;
+    protected $s3Credentials = null;
+    protected $text_tracks_data = null;
     protected $token_expires = null;
-    protected $unsigned_url = null;
     protected $url_cms = 'https://cms.api.brightcove.com/v1/accounts/';
     protected $url_di = 'https://ingest.api.brightcove.com/v1/accounts/';
     protected $url_oauth = 'https://oauth.brightcove.com/v3/access_token?grant_type=client_credentials';
@@ -121,6 +109,7 @@ class BCDIAPI
         $this->responses = new stdClass();
         $this->access_token = null;
         $this->video_id = null;
+        // Instantiate an Amazon S3 client.
     }
 
     /**
@@ -178,6 +167,8 @@ class BCDIAPI
         $this->di_data = $ingest_options->ingest_options;
         $cms_decoded = json_decode($this->cms_data);
         $di_decoded = json_decode($this->di_data);
+       	$this->responses->s3 = array();
+
         // get video id if any
         if (isset($ingest_options->video_id)) {
         	// it's either a replace or retransode
@@ -200,58 +191,77 @@ class BCDIAPI
 	        } else {
 	            // push request
 	            // get filenames and S3 paths
-	        	$this->responses->s3 = array();
-	        	$this->responses->put_files = array();
-	        	foreach ($files as $name => $value) {
-	        		$file_data = new stdClass();
-	        		$file_name = $name.'_name';
-	        		$file_data->type = $name;
-	        		$file_data->file_name = urlencode(array_pop(explode('/', $value)));
-	        		$file_data->path = $value;
-	        		// get the S3 urls
-	        		$s3_response = $this->make_request('get_s3urls', $file_data);
-	        		$file_data->api_request_url = $s3_response->api_request_url;
-	        		$file_data->s3 = $s3_response;
-	        		// make the responses available to the user for debugging purposes
-	        		array_push($this->responses->s3, $s3_response);
-	        		array_push($this->responses->put_files, $put_files_response);
-	        		switch ($file_data->type) {
-	        			case 'video':
-	        				$di_decoded->master = new stdClass();
-	        				$di_decoded->master->url = $file_data->api_request_url;
-	        				$file_data->s3->ContentType = 'video/mp4';
-	        				break;
-	        			case 'poster':
-	        				$di_decoded->poster = new stdClass();
-	        				$di_decoded->poster->url = $file_data->api_request_url;
-	        				$file_data->s3->ContentType = 'image/png';
-	        				break;
-	        			case 'thumbnail':
-	        				$di_decoded->thumbnail = new stdClass();
-	        				$di_decoded->thumbnail->url = $file_data->api_request_url;
-	        				$file_data->s3->ContentType = 'image/png';
-	        				break;
-	        			default:
-	        				// should never get here TODO throw an error
-	        				break;
-	        		}
-	        		// push the file to S3
-	        		$response = $this->make_request('put_files', $file_data);
-	        		var_dump($response);
-	        		var_dump('<hr>');
-	        	}
+	        	$di_decoded = $this->process_files($files, $di_decoded);
 	        	// now update the ingest data
 	        	$this->di_data = json_encode($di_decoded);
-	        }
+	        	var_dump($this->di_data);
+	        	var_dump('<hr>');
+	        	// and do the ingest
+	        	$this->make_request('ingest_video', $this->di_data);
+	        	}
         } else {
         	// existing video
         	if ($this->is_pull_request) {
         		$this->make_request('ingest_video', $this->di_data);
         	} else {
-        		// push request
+	            // push request
+	            // get filenames and S3 paths
+	        	$di_decoded = $this->process_files($files, $di_decoded);
+	        	// now update the ingest data
+	        	$this->di_data = json_encode($di_decoded);
+	        	var_dump($this->di_data);
+	        	var_dump('<hr>');
+	        	// and do the ingest
+	        	$this->make_request('ingest_video', $this->di_data);
         	}
         }
         return $this->responses;
+    }
+
+    /**
+     * prepare files, push them to S3, and adjust data for DI request
+     * @param  object $files      decoded data for files to be pushed
+     * @param  object $di_decoded decoded DI request data
+     * @return object             the updated $di_decoded object
+     */
+    private function process_files($files, $di_decoded) {
+    	foreach ($files as $name => $value) {
+    		$file_data = new stdClass();
+    		$file_name = $name.'_name';
+    		$file_data->type = $name;
+    		$file_data->file_name = urlencode(array_pop(explode('/', $value)));
+    		$file_data->path = $value;
+    		// get the S3 urls
+    		$s3_response = $this->make_request('get_s3urls', $file_data);
+    		$file_data->api_request_url = $s3_response->api_request_url;
+    		$file_data->s3 = $s3_response;
+    		// make the responses available to the user for debugging purposes
+    		array_push($this->responses->s3, $s3_response);
+    		array_push($this->responses->put_files, $put_files_response);
+    		switch ($file_data->type) {
+    			case 'video':
+    				$di_decoded->master = new stdClass();
+    				$di_decoded->master->url = $file_data->api_request_url;
+    				$file_data->s3->ContentType = 'video/mp4';
+    				break;
+    			case 'poster':
+    				$di_decoded->poster = new stdClass();
+    				$di_decoded->poster->url = $file_data->api_request_url;
+    				$file_data->s3->ContentType = 'image/png';
+    				break;
+    			case 'thumbnail':
+    				$di_decoded->thumbnail = new stdClass();
+    				$di_decoded->thumbnail->url = $file_data->api_request_url;
+    				$file_data->s3->ContentType = 'image/png';
+    				break;
+    			default:
+    				// should never get here TODO throw an error
+    				break;
+			}
+    		// push the file to S3
+    		$response = $this->make_request('put_files', $file_data);
+    	}
+    	return $di_decoded;
     }
 
     /**
@@ -284,7 +294,6 @@ class BCDIAPI
      */
     private function make_request($call, $request_data = null)
     {
-        $this->timeout_current = 0;
         $options = array();
         if (isset($request_data) && $call !== 'get_s3urls') {
             $options['data'] = $request_data;
@@ -299,7 +308,6 @@ class BCDIAPI
                 $options['headers'] = array('Content-type: application/x-www-form-urlencoded');
                 $options['user_pwd'] = $this->auth_string;
                 $access_token_response = $this->send_request($options);
-
                 return $access_token_response;
                 break;
             case 'create_video':
@@ -469,20 +477,29 @@ class BCDIAPI
         return $this->bit32clean($response);
     }
 
+    /**
+     * putFileToS3 puts a file to the S3 bucket for push-based ingest
+     * 
+     * @param  [Object] $request_data request data for the request - must in inclue a path and S3 bucket credentials
+     * 
+     */
     protected function putFileToS3($request_data) {
-    	$params = array(
-		    'bucket' => 'your-bucket',
-		    'key'    => 'object_key',
+		// create an S3 client
+		$this->s3 = new S3Client([
+		    'version' => 'latest',
+		    'region'  => 'us-east-1',
 		    'credentials' => array(
-	        'key'    => $request_data->s3->object_key,
-	        'secret' => $request_data->s3->secret_access_key,
-	        'token'	 => $request_data->s3->session_token
+		        'key'    => $request_data->s3->access_key_id,
+		        'secret' => $request_data->s3->secret_access_key,
+		        'token'	 => $request_data->s3->session_token
 	        )
-        );
-    	$uploader = new MultipartUploader($s3, $request_data->path, $params);
-    	var_dump($uploader);
-    	var_dump('<hr>');
+		]);
 
+    	$params = array(
+		    'bucket' => $request_data->s3->bucket,
+		    'key' => $request_data->s3->object_key
+        );
+    	$uploader = new MultipartUploader($this->s3, $request_data->path, $params);
 		try {
 		    $result = $uploader->upload();
 		    return $result;
@@ -509,6 +526,7 @@ class BCDIAPI
         return $response;
     }
 
+    // function below currently not used - saving for future exception handling
     /**
      * Determines if provided type is valid.
      *
@@ -526,6 +544,7 @@ class BCDIAPI
     }
 
 
+    // function below currently not used - saving for future exception handling
     /**
      * Converts an error code into a textual representation.
      *

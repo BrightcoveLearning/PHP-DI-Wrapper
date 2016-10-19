@@ -46,12 +46,13 @@ $push_options = new stdClass();
 $push_options->file_paths = $file_paths;
 $push_options->video_options = $video_metadata;
 $push_options->ingest_options = $push_injest_data;
+$push_options->text_tracks = $text_tracks;
 
 // instantiate the wrapper
 $BCDI = new BCDIAPI($account_data);
 
 // make a request - change data param to test other operations
-$BCDI->ingest_request($push_options);
+$BCDI->ingest_request($pull_options);
 echo '<h3>CMS Response (will be NULL except for new video additions)</h3>';
 var_dump($BCDI->responses->cms);
 echo '<h3>DI Response</h3>';
