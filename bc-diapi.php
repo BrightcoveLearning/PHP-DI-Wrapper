@@ -563,8 +563,8 @@ class BCDIAPI
             case self::ERROR_API_ERROR:
                 return 'API error';
                 break;
-            case self::ERROR_DTO_DOES_NOT_EXIST:
-                return 'The requested object does not exist';
+            case self::ERROR_ACCOUNT_ID_NOT_PROVIDED:
+                return 'You must provide a valid Video Cloud account id';
                 break;
             case self::ERROR_ID_NOT_PROVIDED:
                 return 'ID not provided';
@@ -573,7 +573,7 @@ class BCDIAPI
                 return 'Unsupported file type';
                 break;
             case self::ERROR_INVALID_JSON:
-                return 'Requested method not found';
+                return 'Please check your input data to insure that all JSON strings are valid';
                 break;
             case self::ERROR_INVALID_PROPERTY:
                 return 'Requested property not found';
