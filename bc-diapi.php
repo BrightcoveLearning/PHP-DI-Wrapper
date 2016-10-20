@@ -166,7 +166,7 @@ class BCDIAPI
         if (isset($ingest_options->video_options)) {
 	        $this->cms_data = $ingest_options->video_options;
         	$this->is_new_video = true;
-        } 
+        }
         $this->di_data = $ingest_options->ingest_options;
         $cms_decoded = json_decode($this->cms_data);
         $di_decoded = json_decode($this->di_data);
@@ -261,6 +261,30 @@ class BCDIAPI
     				// should never get here TODO throw an error
     				break;
 			}
+    		// push the file to S3
+    		$response = $this->make_request('put_files', $file_data);
+    	}
+    	return $di_decoded;
+    }
+
+    /**
+     * prepare files, push them to S3, and adjust data for DI request
+     * @param  object $files      decoded data for files to be pushed
+     * @param  object $di_decoded decoded DI request data
+     * @return object             the updated $di_decoded object
+     */
+    private function process_text_tracks($text_tracks, $di_decoded) {
+        $text_tracks_data = array();
+        foreach ($text_tracks as $key => $value) {
+            $text_track_data = $value;
+    		$text_track_data->file_name = urlencode(array_pop(explode('/', $text_track_data->path)));
+    		// get the S3 urls
+    		$s3_response = $this->make_request('get_s3urls', $file_data);
+    		$file_data->api_request_url = $s3_response->api_request_url;
+    		$file_data->s3 = $s3_response;
+    		// make the responses available to the user for debugging purposes
+    		array_push($this->responses->s3, $s3_response);
+    		array_push($this->responses->put_files, $put_files_response);
     		// push the file to S3
     		$response = $this->make_request('put_files', $file_data);
     	}
@@ -482,9 +506,9 @@ class BCDIAPI
 
     /**
      * putFileToS3 puts a file to the S3 bucket for push-based ingest
-     * 
+     *
      * @param  [Object] $request_data request data for the request - must in inclue a path and S3 bucket credentials
-     * 
+     *
      */
     protected function putFileToS3($request_data) {
 		// create an S3 client
