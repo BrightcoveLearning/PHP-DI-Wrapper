@@ -49,11 +49,13 @@ $push_options->ingest_options = $push_injest_data;
 $push_options->text_tracks = $text_tracks;
 
 // instantiate the wrapper
-$BCDI = new BCDIAPI($account_data);
+$bcdi = new BCDIAPI($account_data);
 
 // make a request - change data param to test other operations
-$BCDI->ingest_request($pull_options);
+$bcdi->ingest_request($push_options);
 echo '<h3>CMS Response (will be NULL except for new video additions)</h3>';
-var_dump($BCDI->responses->cms);
+var_dump($bcdi->responses->cms);
+echo '<h3>S3 Responses (will be NULL for pull-based ingest)</h3>';
+var_dump($bcdi->responses->cms);
 echo '<h3>DI Response</h3>';
-var_dump($BCDI->responses->di);
+var_dump($bcdi->responses->di);

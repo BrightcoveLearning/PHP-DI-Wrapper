@@ -45,18 +45,6 @@
         <fieldset>
             <legend>Input</legend>
             <p>
-                Account id:
-                <input name="account" id="accountId" type="text" value="">
-            </p>
-            <p>
-                Client id:
-                <input name="client_id" id="clientId" type="text" value="">
-            </p>
-            <p>
-                Client secret:
-                <input name="client_secret" id="clientSecret" type="text" value="">
-            </p>
-            <p>
                 Request type:<br />
                 <input type="radio" id="rPullVideo" name="requestType" value="pullNewVideo" checked="checked"><label for="rPullVideo"> New Video (pull-based)</label><br>
                 <input type="radio" id="rPushVideo" name="requestType" value="pushNewVideo"><label for="rPushVideo"> New Video (sush-based)</label><br>
@@ -65,42 +53,7 @@
                 <input type="radio" id="rRetranscodeVideo" name="requestType" value="retrancodeVideo"><label for="rRetranscodeVideo"> Retranscode Video</label> | Video ID: <input type="text" id="retranscodeVideoId" value=""><br>
                 <input type="radio" name="requestType" id="rAddMedia" value="addMedia"><label for="rAddMedia"> Add media for Video</label> | Video ID: <input type="text" id="addMediaVideoId" value=""><br>
             </p>
-            <p>
-                Select video for <strong>pull-based</strong> ingestion:
-                <select id="pullVideoSelect">
-                    <option value="">Select a video</option>
-                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
-                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
-                    <option value="http://solutions.brightcove.com/bcls/assets/videos/laughing_gull.mp4">Laughing Gull</option>
-                    <option value="http://solutions.brightcove.com/bcls/assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
-                </select>
-            </p>
-            <p>
-                Select video for <strong>pushed-based</strong> ingestion:
-                <select id="pushVideoSelect">
-                    <option value="">Select a video</option>
-                    <option value="../../assets/videos/Great_Blue_Heron.mp4">Great Blue Heron</option>
-                    <option value="../../assets/videos/Great_Horned_Owl.mp4">Great Horned Owl</option>
-                    <option value="../../assets/videos/laughing_gull.mp4">Laughing Gull</option>
-                    <option value="../../assets/videos/Oystercatcher.mp4">Oyster Catcher</option>
-                </select>
-            </p>
-            <p>
-                <input type="checkbox" id="captureImages" value="true" /> <label for="captureImages">Capture Images</label>,
-            </p>
-            <p>
-                Video Metadata (JSON: optional):<br />
-<textarea class="input" id="metadata">{
-    "description": "An original nature video",
-    "custom_fields": {
-        "subject": "Bird"
-    },
-    "tags": [
-        "nature",
-        "bird"
-    ]
-}</textarea>
-            </p>
+            
             <p>
                 Poster Information (JSON: optional):<br />
 <textarea class="input" id="posterdata">{
