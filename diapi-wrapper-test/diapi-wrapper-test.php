@@ -1,6 +1,5 @@
 <?php
-
-require 'bc-diapi.php';
+require '../bc-diapi.php';
 
 
 // sample data
@@ -21,8 +20,8 @@ $account_data = '{"client_secret": "h1dbPZCMFsloMCiXprlGDvdDR7QXtcw9alyocJ1ShDfL
 
 // for push-based ingest
 $file_paths = '{"video": "../assets/videos/Great_Blue_Heron.mp4"}';
-$file_paths_full = '{"video": "../assets/videos/Great_Blue_Heron.mp4","poster": "../assets/images/Great-Blue-Heron.png","thumbnail": "../assets/images/great-blue-heron-thumbnail.png"}';
-$text_tracks = '[{"path": "../assets/vtt/sample.vtt", "srclang": "en","kind": "captions","label": "EN","default": true}]';
+$file_paths_full = '{"video": "../assets/Great_Blue_Heron.mp4","poster": "../assets/Great-Blue-Heron.png","thumbnail": "../assets/great-blue-heron-thumbnail.png"}';
+$text_tracks = '[{"path": "../assets/sample.vtt", "srclang": "en","kind": "captions","label": "EN","default": true}]';
 
 // pull request options
 $pull_options = new stdClass();
@@ -50,7 +49,7 @@ $push_options->text_tracks = $text_tracks;
 
 // instantiate the wrapper
 $bcdi = new BCDIAPI($account_data);
-
+var_dump($bcdi);
 // make a request - change data param to test other operations
 $bcdi->ingest_request($push_options);
 echo '<h3>CMS Response (will be NULL except for new video additions)</h3>';
