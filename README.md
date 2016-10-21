@@ -3,51 +3,14 @@ About
 
 This project provides a starting point for integrating the Brightcove Dynamic Ingest API into your application. It provides simple ways to add and update videos and associated media using either pull-based ingest or source file upload. It also provides a function to get the status of an ingest request (Bolt only).
 
-Compatibility Notice
-====================
-
-Please note that the PHP MAPI Wrapper v2.0 is **not** compatible with any
-previous versions (when it was known as "Echove"). The class name has been
-changed, numerous functions have been re-named, and methods have been
-updated to take advantage of Brightcove API changes.
-
-If you need assistance in determining what changes have been made, please
-send an e-mail to opensource@brightcove.com with your request.
-
 Requirements
 ============
 
-PHP version 5.2 or greater, or you must have the JavaScript Object Notation
-(JSON) PECL package. For more information on the JSON PECL package, please
-visit the [PHP JSON](http://www.php.net/json) package website.
+PHP version 5.2 or greater.
 
-Using Cache Extension
-=====================
+Instantiating the Wrapper
+=========================
 
-The PHP MAPI Wrapper includes a caching extension. To use this feature,
-include the file on your page along with the core PHP MAPI Wrapper file.
-
-    require('bc-mapi.php');
-    require('bc-mapi-cache.php');
-
-Then, after instantiating the core class, you can instantiate the caching
-extension.
-
-    // Using flat files
-    $bc = new BCMAPI(API_READ_TOKEN, API_WRITE_TOKEN);
-    $bc_cache = new BCMAPICache('file', 600, '/var/www/myWebSite/cache/', '.cache');
-
-    // Using Memcached
-    $bc = new BCMAPI(API_READ_TOKEN, API_WRITE_TOKEN);
-    $bc_cache = new BCMAPICache('memcached', 600, 'localhost', NULL, 11211);
-
-The parameters for the constructor are:
-
-*	[string] The type of caching method to use, either 'file' or 'memcached'
-*	[int] How many seconds until cache files are considered cold
-*	[string] The absolute path of the cache directory (file) or host (memcached)
-*	[string] The file extension for cache items (file only)
-*	[int] The port to use (Memcached only)
 
 * * *
 
@@ -68,14 +31,12 @@ This example shows how to instantiate, or start, the BCMAPI PHP class. The first
         'WRITE_API_TOKEN'
     );
 
-    // You may optionally include the caching extension provided with BCMAPI...
-    require('bc-mapi-cache.php');
+    The parameters for the constructor are:
 
-    // Using flat files
-    $bc_cache = new BCMAPICache('file', 600, '/var/www/myWebSite/cache/', '.cache');
-
-    // Using Memcached
-    $bc_cache = new BCMAPICache('memcached', 600, 'localhost', NULL, 11211);
+    *	[JSON string] $account_data
+    *	[string] $account_data->account_id The account id
+    *	[string] $account_data->client_id A client id for Dynamic Ingest
+    *	[string] $account_data->client_secret A client secret for Dynamic Ingest
 
 
 Properties
