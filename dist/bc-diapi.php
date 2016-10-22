@@ -65,6 +65,7 @@ class BCDIAPI
     protected $access_token = null;
     protected $account_data = null;
     protected $account_id = null;
+    protected $auth_string = null;
     protected $bit32 = false;
     protected $client_id = null;
     protected $client_secret = null;
@@ -171,7 +172,7 @@ class BCDIAPI
         $cms_decoded = json_decode($this->cms_data);
         $di_decoded = json_decode($this->di_data);
         $this->responses->s3 = array();
-
+        $this->responses->putFiles = array();
         // get video id if any
         if (isset($ingest_options->video_id)) {
             // it's either a replace or retransode
@@ -224,8 +225,12 @@ class BCDIAPI
 
     /**
      * prepare files, push them to S3, and adjust data for DI request
+     *
+     * @since 0.1.0
+     *
      * @param  object $files      decoded data for files to be pushed
      * @param  object $di_decoded decoded DI request data
+     *
      * @return object             the updated $di_decoded object
      */
     private function process_files($files, $di_decoded) {
@@ -233,7 +238,10 @@ class BCDIAPI
             $file_data = new stdClass();
             $file_name = $name.'_name';
             $file_data->type = $name;
-            $file_data->file_name = urlencode(array_pop(explode('/', $value)));
+            $tmpArr = (explode('/', $value));
+            $tmpName = array_pop($tmpArr);
+            $tmp = urlencode($tmpName);
+            $file_data->file_name = $tmp;
             $file_data->path = $value;
             // get the S3 urls
             $s3_response = $this->make_request('get_s3urls', $file_data);
@@ -241,7 +249,6 @@ class BCDIAPI
             $file_data->s3 = $s3_response;
             // make the responses available to the user for debugging purposes
             array_push($this->responses->s3, $s3_response);
-            array_push($this->responses->put_files, $put_files_response);
             switch ($file_data->type) {
                 case 'video':
                     $di_decoded->master = new stdClass();
@@ -263,15 +270,22 @@ class BCDIAPI
                     break;
             }
             // push the file to S3
-            $response = $this->make_request('put_files', $file_data);
+            $putFiles_response = $this->make_request('put_files', $file_data);
+            array_push($this->responses->putFiles, $putFiles_response);
         }
         return $di_decoded;
     }
 
     /**
      * prepare text tracks, push them to S3, and adjust data for DI request
+     *
+     *
+     *
+     * @since 0.1.0
+     *
      * @param  object $text_tracks      decoded data for text track files to be pushed
      * @param  object $di_decoded decoded DI request data
+     *
      * @return object             the updated $di_decoded object
      */
     private function process_text_tracks($text_tracks, $di_decoded) {
@@ -293,18 +307,20 @@ class BCDIAPI
                 $text_track_data->default = $value->default;
             }
             $push_data = $value;
-            $push_data->file_name = urlencode(array_pop(explode('/', $push_data->path)));
+            $tmpArr = explode('/', $push_data->path);
+            $tmpName = urlencode(array_pop($tmpArr));
+            $push_data->file_name = $tmpName;
             // get the S3 urls
             $s3_response = $this->make_request('get_s3urls', $push_data);
             $text_track_data->url = $s3_response->api_request_url;
             $push_data->s3 = $s3_response;
             // make the responses available to the user for debugging purposes
             array_push($this->responses->s3, $s3_response);
-            array_push($this->responses->put_files, $put_files_response);
             // add this track to the text tracks array
             array_push($text_tracks_data, $text_track_data);
             // push the file to S3
-            $response = $this->make_request('put_files', $push_data);
+            $putFiles_response = $this->make_request('put_files', $push_data);
+            array_push($this->responses->putFiles, $putFiles_response);
         }
         // add text tracks data to di data
         $di_decoded->text_tracks = $text_tracks_data;
@@ -380,7 +396,7 @@ class BCDIAPI
                 break;
             case 'put_files':
                 $response = $this->putFileToS3($request_data);
-                return $result;
+                return $response;
                 break;
             case 'ingest_video':
                 $options['url'] = $this->url_di.$this->account_id.'/videos/'.$this->video_id.'/ingest-requests';
@@ -521,7 +537,11 @@ class BCDIAPI
     /**
      * putFileToS3 puts a file to the S3 bucket for push-based ingest
      *
+     * @since 0.1.0
+     *
      * @param  [Object] $request_data request data for the request - must in inclue a path and S3 bucket credentials
+     *
+     * @return [Object] the response from S3
      *
      */
     protected function putFileToS3($request_data) {
@@ -535,15 +555,14 @@ class BCDIAPI
                 'token'	 => $request_data->s3->session_token
             )
         ]);
-
         $params = array(
             'bucket' => $request_data->s3->bucket,
             'key' => $request_data->s3->object_key
         );
         $uploader = new MultipartUploader($this->s3, $request_data->path, $params);
         try {
-            $result = $uploader->upload();
-            return $result;
+            $response = $uploader->upload();
+            return $response;
         } catch (MultipartUploadException $e) {
             echo $e->getMessage() . "\n";
         }
