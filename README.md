@@ -7,7 +7,7 @@ This project provides a starting point for integrating the Brightcove Dynamic In
 
 ## Requirements
 
-PHP version 5.2 or greater.
+PHP version 5.4 or greater.
 
 ## Installation
 
