@@ -42,7 +42,7 @@ This example shows how to instantiate, or start, the BCDIAPI PHP class. The argu
 
 The parameters for the constructor are:
 
-    * [JSON string] $account_data
+* [JSON string] $account_data
 
 ### Ingest request
 
@@ -60,12 +60,12 @@ There is one method to handle ingest requests of all types - only the input data
 
 The parameters for the method are:
 
-    * [object] $ingest_options
-        * [JSON string] $ingest_options->video_options a JSON string corresponding to the request body for the CMS API request - **required for new videos**
-        * [JSON string] $ingest_options->ingest_options a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
-        * [JSON string] $ingest_options->file_paths a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
-        * [JSON string] $ingest_options->text_tracks a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
-        * [string] $ingest_options->video_id video id (required for replace/retrancode requests)
+* [object] $ingest_options
+    * [JSON string] $ingest_options->video_options a JSON string corresponding to the request body for the CMS API request - **required for new videos**
+    * [JSON string] $ingest_options->ingest_options a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
+    * [JSON string] $ingest_options->file_paths a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
+    * [JSON string] $ingest_options->text_tracks a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
+    * [string] $ingest_options->video_id video id (required for replace/retrancode requests)
 
 Notes:
 
