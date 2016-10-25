@@ -1,13 +1,10 @@
 <?php
-// modify the path below if needed
 require '../dist/bc-diapi.php';
 
 $account_info = new stdClass();
 $request_type = null;
 $video_id = null;
 // process input data
-var_dump($_POST['typeSelect']);
-var_dump('<hr>');
 if (isset($_POST)) {
     if (isset($_POST['account_id'])) {
         $account_info->account_id = $_POST['account_id'];

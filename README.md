@@ -14,6 +14,23 @@ PHP version 5.2 or greater.
 1. Download, clone, or fork this repository.
 2. Copy the **dist** folder to your local or remote web server - *note: for the wrapper to function properly, you must make a physical copy, not a symlink*
 
+## Testing
+
+You can test the installation by copying the **sample** folder to your web server - it should be placed at the same level of directory tree as the **dist** folder.
+
+Then:
+
+1. Browse to http://yourpath/sample/index.html
+2. Enter the necessary account id, client id, and client secret (and video id to test replace or transcode)
+3. Select an operation
+4. Click sumbit
+5. See the results in Output area
+
+## Known issues
+
+1. The items in the putFiles responses will be empty objects (source file upload requests) - this is a bug I haven't tracked down, but it's not critical - you don't need that information for anything
+2. Exception handling is not yet implemented - failures will likely be silent
+
 ___
 
 ## Examples
