@@ -23,7 +23,7 @@ ___
 
 This example shows how to instantiate, or start, the BCDIAPI PHP class. The argument, a JSON string, is required, and must take the form shown here. The recommended permissions for your credentials are:
 
-![DI Credentials](sample/assets/di-credentials-permissions.png "DI Credentials")
+![DI Credentials](assets/di-credentials-permissions.png "DI Credentials")
 
 #### Sample code
 
@@ -38,7 +38,7 @@ This example shows how to instantiate, or start, the BCDIAPI PHP class. The argu
     }';
 
     // Instantiate the class, passing it the account information
-    $bc = new BCDIAPI($account_data);
+    $bcdi = new BCDIAPI($account_data);
 
 The parameters for the constructor are:
 
@@ -60,16 +60,95 @@ There is one method to handle ingest requests of all types - only the input data
 
 The parameters for the method are:
 
-    [object] $ingest_options
-        [JSON string] $ingest_options->video_options a JSON string corresponding to the request body for the CMS API request - **required for new videos**
-        [JSON string] $ingest_options->ingest_options a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
-        [JSON string] $ingest_options->file_paths a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
-        [JSON string] $ingest_options->text_tracks a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
+    * [object] $ingest_options
+        * [JSON string] $ingest_options->video_options a JSON string corresponding to the request body for the CMS API request - **required for new videos**
+        * [JSON string] $ingest_options->ingest_options a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
+        * [JSON string] $ingest_options->file_paths a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
+        * [JSON string] $ingest_options->text_tracks a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
+        * [string] $ingest_options->video_id video id (required for replace/retrancode requests)
 
 Notes:
 
 1. For the `video_options`, see the [API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object) - for new videos, minimal JSON would be `{"name": "My Video Title"}`
 2. For the `ingest_options`, see the [API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Ingest-Ingest_Media_Asset) and the examples below
+
+##### Examples
+
+Note that the examples below assume the wrapper is already instantiated as `$bcdi`.
+
+###### Ingest new video (pull-based)
+
+    // to ingest new video (pull-based)
+    $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An original nature video","tags": ["nature","bird"]}';
+    // pull ingest options
+    $pull_ingest_data = '{"profile": "videocloud-default-v1","capture-images": true,"text_tracks": [{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}],"master": {"url": "http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4"},"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+
+    $pull_options = new stdClass();
+    $pull_options->video_options = $video_metadata;
+    $pull_options->ingest_options = $pull_ingest_data;
+
+    // make a request
+    $responses = $bcdi->ingest_request($pull_options);
+
+###### Ingest new video (upload source files)
+
+    // to ingest new video (upload source files)
+    $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An // push ingest data
+    $push_ingest_data = '{"profile": "videocloud-default-v1","capture-images": false,"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+    $file_paths = '{"video": "../assets/Great-Blue-Heron.mp4","poster": "../assets/Great-Blue-Heron.png","thumbnail": "../assets/great-blue-heron-thumbnail.png"}';
+    $text_tracks = '[{"path": "../assets/sample.vtt", "srclang": "en","kind": "captions","label": "EN","default": true}]';
+
+    $push_options = new stdClass();
+    $push_options->video_options = $video_metadata;
+    $push_options->ingest_options = $push_ingest_data;
+    $push_options->file_paths = $file_paths;
+    $push_options->text_tracks = $text_tracks;
+
+    // make a request
+    $responses = $bcdi->ingest_request($push_options);
+
+###### Replace video (pull-based)
+
+    // to replace video (pull-based)
+    $video_id = '1234567890';
+    $pull_ingest_data = '{"profile": "videocloud-default-v1","capture-images": true,"text_tracks": [{"url": "http://solutions.brightcove.com/bcls/assets/vtt/sample.vtt","srclang": "en","kind": "captions","label": "EN","default": true}],"master": {"url": "http://solutions.brightcove.com/bcls/assets/videos/Great_Blue_Heron.mp4"},"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+
+    $pull_options = new stdClass();
+    $pull_options->video_id = $video_id;
+    $pull_options->ingest_options = $pull_ingest_data;
+
+    // make a request
+    $responses = $bcdi->ingest_request($push_options);
+
+###### Replace video (upload source files)
+
+    // to replace video (upload source files)
+    $video_id = '1234567890';
+    $push_ingest_data = '{"profile": "videocloud-default-v1","capture-images": false,"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+    $file_paths = '{"video": "../assets/Great-Blue-Heron.mp4","poster": "../assets/Great-Blue-Heron.png","thumbnail": "../assets/great-blue-heron-thumbnail.png"}';
+    $text_tracks = '[{"path": "../assets/sample.vtt", "srclang": "en","kind": "captions","label": "EN","default": true}]';
+
+    $push_options = new stdClass();
+    $push_options->video_id = $video_id;
+    $push_options->ingest_options = $push_ingest_data;
+    $push_options->file_paths = $file_paths;
+    $push_options->text_tracks = $text_tracks;
+
+    // make a request
+    $responses = $bcdi->ingest_request($push_options);
+
+###### Retranscode video
+
+    // to ingest new video (pull-based)
+    $video_id = '1234567890';
+    $retranscode_data = '{"profile": "high-resolution","capture-images": true,"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
+
+    $ingest_options = new stdClass();
+    $ingest_options->video_id = $video_id;
+    $ingest_options->ingest_options = $push_ingest_data;
+
+    // make a request
+    $responses = $bcdi->ingest_request($ingest_options);
 
 ## Error Handling
 
@@ -80,7 +159,7 @@ This example shows how to utilize the built-in error handling in BCDIAPI.
     // Create a try/catch
     try {
         // Make our API call
-        $video = $bc->find('find_video_by_id', 123456789);
+        $video = $bc->ingest_request($ingest_options);
     } catch(Exception $error) {
         // Handle our error
         echo $error;
