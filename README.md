@@ -16,7 +16,11 @@ PHP version 5.4 or greater.
 
 ## Testing
 
-You can test the installation by copying the **sample** folder to your web server - it should be placed at the same level of directory tree as the **dist** folder.
+You can test the installation by copying the **sample** folder to your web server - it should be placed at the same level of the directory tree as the **dist** folder - e.g.:
+
+{root}>
+  - dist
+  - sample
 
 Then:
 
@@ -44,8 +48,10 @@ This example shows how to instantiate, or start, the BCDIAPI PHP class. The argu
 
 #### Sample code
 
+    <?php
+    
     // Include the BCDIAPI SDK
-    require('bc-diapi.php');
+    require 'path_to_wrapper/bc-diapi.php';
 
     // account information
     $account_data = '{
