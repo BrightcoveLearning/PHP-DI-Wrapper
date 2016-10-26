@@ -2,7 +2,6 @@
 
 ## About
 
-
 This project provides a starting point for integrating the Brightcove Dynamic Ingest API into your application. It provides simple ways to add and update videos and associated media using either pull-based ingest or source file upload.
 
 ## Requirements
@@ -13,6 +12,12 @@ PHP version 5.4 or greater.
 
 1. Download, clone, or fork this repository.
 2. Copy the **dist** folder to your local or remote web server - *note: for the wrapper to function properly, you must make a physical copy, not a symlink*
+
+## Authentication
+
+The DI wrapper will fetch necessary access tokens for your requests - you must provide client credentials with permissions adequate for Dynamic Ingest operations. The recommended permissions for your credentials are:
+
+![DI Credentials](assets/di-credentials-permissions.png "DI Credentials")
 
 ## Testing
 
@@ -27,7 +32,7 @@ Then:
 1. Browse to http://yourpath/sample/index.html
 2. Enter the necessary account id, client id, and client secret (and video id to test replace or transcode)
 3. Select an operation
-4. Click sumbit
+4. Click submit
 5. See the results in Output area
 
 ## Known issues
@@ -39,17 +44,14 @@ ___
 
 ## Examples
 
-
 ### Instantiation
 
 This example shows how to instantiate, or start, the BCDIAPI PHP class. The argument, a JSON string, is required, and must take the form shown here. The recommended permissions for your credentials are:
 
-![DI Credentials](assets/di-credentials-permissions.png "DI Credentials")
-
 #### Sample code
 
     <?php
-    
+
     // Include the BCDIAPI SDK
     require 'path_to_wrapper/bc-diapi.php';
 
@@ -65,7 +67,7 @@ This example shows how to instantiate, or start, the BCDIAPI PHP class. The argu
 
 The parameters for the constructor are:
 
-* [JSON string] $account_data
+* [JSON string] `$account_data`
 
 ### Ingest request
 
@@ -83,12 +85,12 @@ There is one method to handle ingest requests of all types - only the input data
 
 The parameters for the method are:
 
-* [object] $ingest_options
-    * [JSON string] $ingest_options->video_options a JSON string corresponding to the request body for the CMS API request - **required for new videos**
-    * [JSON string] $ingest_options->ingest_options a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
-    * [JSON string] $ingest_options->file_paths a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
-    * [JSON string] $ingest_options->text_tracks a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
-    * [string] $ingest_options->video_id video id (required for replace/retrancode requests)
+* [object] `$ingest_options`
+    * [JSON string] `$ingest_options->video_options` a JSON string corresponding to the request body for the CMS API request - **required for new videos**
+    * [JSON string] `$ingest_options->ingest_options` a JSON string corresponding to the request body for the Dynamic Ingest API request - **required**
+    * [JSON string] `$ingest_options->file_paths` a JSON string containing paths to the video, poster, and/or thumbnail files **required** *for source file upload requests only* - see the examples below for the structure
+    * [JSON string] `$ingest_options->text_tracks` a JSON string containing paths and other parameters for text tracks *for source file upload requests only* - see the examples below for the structure
+    * [string] `$ingest_options->video_id` video id (required for replace/retrancode requests)
 
 Notes:
 

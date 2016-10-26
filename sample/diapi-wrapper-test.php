@@ -4,6 +4,7 @@ require '../dist/bc-diapi.php';
 $account_info = new stdClass();
 $request_type = null;
 $video_id = null;
+$echo_message = 'Processing....';
 // process input data
 if (isset($_POST)) {
     if (isset($_POST['account_id'])) {
@@ -94,9 +95,9 @@ $request_data = $data_sets->$request_type;
 $responses = $bcdi->ingest_request($request_data);
 echo '<h3 style="font-family:sans-serif;">CMS Response (will be NULL for replace/retranscode requests)</h3>';
 echo '<pre>'.json_encode($responses->cms, JSON_PRETTY_PRINT).'</pre>';
-echo '<h3 style="font-family:sans-serif;">S3 Responses (will be empty for pull-based ingest)</h3>';
-echo '<pre>'.json_encode($responses->s3, JSON_PRETTY_PRINT).'</pre>';
-echo '<h3 style="font-family:sans-serif;">PUT File Responses (will be empty for pull-based ingest)</h3>';
-echo '<pre>'.json_encode($responses->putFiles, JSON_PRETTY_PRINT).'</pre>';
+// echo '<h3 style="font-family:sans-serif;">S3 Responses (will be empty for pull-based ingest)</h3>';
+// echo '<pre>'.json_encode($responses->s3, JSON_PRETTY_PRINT).'</pre>';
+// echo '<h3 style="font-family:sans-serif;">PUT File Responses (will be empty for pull-based ingest)</h3>';
+// echo '<pre>'.json_encode($responses->putFiles, JSON_PRETTY_PRINT).'</pre>';
 echo '<h3 style="font-family:sans-serif;">DI Response</h3>';
 echo '<pre>'.json_encode($responses->di, JSON_PRETTY_PRINT).'</pre>';

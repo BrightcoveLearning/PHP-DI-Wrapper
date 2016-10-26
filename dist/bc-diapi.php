@@ -54,11 +54,15 @@ class BCDIAPI
     const ERROR_NO_VIDEO_ID = 14;
     const ERROR_DTO_DOES_NOT_EXIST = 12;
     const ERROR_INVALID_FILE_TYPE = 5;
-    const ERROR_INVALID_JSON = 3;
-    const ERROR_INVALID_PROPERTY = 4;
+    const ERROR_INVALID_JSON_ACCOUNT_DATA = 3;
+    const ERROR_INVALID_JSON_VIDEO_DATA = 14;
+    const ERROR_INVALID_JSON_INGEST_DATA = 15;
+    const ERROR_INVALID_JSON_FILES_DATA = 16;
+    const ERROR_INVALID_JSON_TEXT_TRACKS_DATA = 17;
+    const ERROR_DYNAMIC_INGEST_API_TRANSACTION_FAILED = 4;
     const ERROR_INVALID_CALL = 6;
     const ERROR_INVALID_UPLOAD_OPTION = 7;
-    const ERROR_READ_API_TRANSACTION_FAILED = 8;
+    const ERROR_CMS_API_TRANSACTION_FAILED = 8;
     const ERROR_SEARCH_TERMS_NOT_PROVIDED = 13;
     const ERROR_WRITE_API_TRANSACTION_FAILED = 10;
 
@@ -113,42 +117,6 @@ class BCDIAPI
         // Instantiate an Amazon S3 client.
     }
 
-    /**
-     * Sets a property of the BCDIAPI class.
-     *
-     * @since 0.1.0
-     *
-     * @param string [$key] The property to set
-     * @param mixed [$value] The new value for the property
-     *
-     * @return mixed The new value of the property
-     */
-    public function __set($key, $value)
-    {
-        if (isset($this->$key) || is_null($this->$key)) {
-            $this->$key = $value;
-        } else {
-            throw new BCDIAPIInvalidProperty($this, self::ERROR_INVALID_PROPERTY);
-        }
-    }
-
-    /**
-     * Retrieves a property of the BCDIAPI class.
-     *
-     * @since 0.1.0
-     *
-     * @param string [$key] The property to retrieve
-     *
-     * @return mixed The value of the property
-     */
-    public function __get($key)
-    {
-        if (isset($this->$key) || is_null($this->$key)) {
-            return $this->$key;
-        } else {
-            throw new BCDIAPIInvalidProperty($this, self::ERROR_INVALID_PROPERTY);
-        }
-    }
 
     /**
      * Adds media (videos, images, text tracks) to the account.
@@ -198,8 +166,8 @@ class BCDIAPI
                 $di_decoded = $this->process_files($files, $di_decoded);
                 // do text tracks if any
                 if (isset($ingest_options->text_tracks)) {
-                	$text_tracks = json_decode($ingest_options->text_tracks);
-                	$di_decoded = $this->process_text_tracks($text_tracks, $di_decoded);
+                    $text_tracks = json_decode($ingest_options->text_tracks);
+                    $di_decoded = $this->process_text_tracks($text_tracks, $di_decoded);
                 }
                 // now update the ingest data
                 $this->di_data = json_encode($di_decoded);
@@ -228,10 +196,10 @@ class BCDIAPI
      *
      * @since 0.1.0
      *
-     * @param  object $files      decoded data for files to be pushed
+     * @param  object $files decoded data for files to be pushed
      * @param  object $di_decoded decoded DI request data
      *
-     * @return object             the updated $di_decoded object
+     * @return object the updated $di_decoded object
      */
     private function process_files($files, $di_decoded) {
         foreach ($files as $name => $value) {
@@ -279,14 +247,12 @@ class BCDIAPI
     /**
      * prepare text tracks, push them to S3, and adjust data for DI request
      *
-     *
-     *
      * @since 0.1.0
      *
-     * @param  object $text_tracks      decoded data for text track files to be pushed
+     * @param  object $text_tracks decoded data for text track files to be pushed
      * @param  object $di_decoded decoded DI request data
      *
-     * @return object             the updated $di_decoded object
+     * @return object the updated $di_decoded object
      */
     private function process_text_tracks($text_tracks, $di_decoded) {
         $text_tracks_data = array();
