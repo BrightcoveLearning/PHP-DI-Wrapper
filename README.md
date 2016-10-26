@@ -97,6 +97,14 @@ Notes:
 1. For the `video_options`, see the [API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Video-Create_Video_Object) - for new videos, minimal JSON would be `{"name": "My Video Title"}`
 2. For the `ingest_options`, see the [API reference](http://docs.brightcove.com/en/video-cloud/di-api/reference/versions/v1/index.html#api-Ingest-Ingest_Media_Asset) and the examples below
 
+Returns:
+
+* [object] the object has 4 members
+    * `cms` the CMS API response (for new video ingests)
+    * `s3` an array of responses for S3 information requests (source file upload)
+    * `putFiles` an array of responses from putting files to S3 (currently the objects are empty - a non-critical bug)
+    * `di` the Dynamic Ingest API response
+
 ##### Examples
 
 Note that the examples below assume the wrapper is already instantiated as `$bcdi`.
