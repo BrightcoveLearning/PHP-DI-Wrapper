@@ -4,7 +4,6 @@ require '../dist/bc-diapi.php';
 $account_info = new stdClass();
 $request_type = null;
 $video_id = null;
-$echo_message = 'Processing....';
 // process input data
 if (isset($_POST)) {
     if (isset($_POST['account_id'])) {
@@ -49,7 +48,7 @@ $push_ingest_data = '{"profile": "videocloud-default-v1","capture-images": true,
 $retranscode_data = '{"profile": "videocloud-default-v1","capture-images": false,"master": { "use_archived_master": true },"callbacks": ["http://solutions.brightcove.com/bcls/di-api/di-callbacks.php"]}';
 
 // for replace video test
-$account_data = '{"client_secret": "h1dbPZCMFsloMCiXprlGDvdDR7QXtcw9alyocJ1ShDfLZ5QxqBqb9u_5gGcU6mlyA1PbbG6ABYS1FMDVE4JNDQ","client_id": "b10631d3-7597-4be8-b8b5-dce142f81006","account_id": "57838016001"}';
+$account_data = json_encode($account_info);
 
 // for push-based ingest
 $file_paths = '{"video": "assets/Great-Blue-Heron.mp4"}';
@@ -90,9 +89,21 @@ $data_sets->retranscode_options->ingest_options = $retranscode_data;
 
 // instantiate the wrapper
 $bcdi = new BCDIAPI($account_data);
+echo '<p>Wrapper instantiated</p>';
 // make a request - change data param to test other operations
 $request_data = $data_sets->$request_type;
-$responses = $bcdi->ingest_request($request_data);
+echo '<p>Request submitted</p>';
+echo '<p>Processing...</p>';
+// Create a try/catch
+try {
+    // make request
+    $responses = $bcdi->ingest_request($request_data);
+} catch(Exception $error) {
+    // Handle our error
+    echo $error;
+    die();
+}
+echo '<p>Processing complete</p>';
 echo '<h3 style="font-family:sans-serif;">CMS Response (will be NULL for replace/retranscode requests)</h3>';
 echo '<pre>'.json_encode($responses->cms, JSON_PRETTY_PRINT).'</pre>';
 // echo '<h3 style="font-family:sans-serif;">S3 Responses (will be empty for pull-based ingest)</h3>';
@@ -101,3 +112,4 @@ echo '<pre>'.json_encode($responses->cms, JSON_PRETTY_PRINT).'</pre>';
 // echo '<pre>'.json_encode($responses->putFiles, JSON_PRETTY_PRINT).'</pre>';
 echo '<h3 style="font-family:sans-serif;">DI Response</h3>';
 echo '<pre>'.json_encode($responses->di, JSON_PRETTY_PRINT).'</pre>';
+?>

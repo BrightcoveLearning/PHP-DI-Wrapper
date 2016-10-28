@@ -49,7 +49,7 @@ class BCDIAPI
 {
     const ERROR_INVALID_JSON_ACCOUNT_DATA = 1;
     const ERROR_ACCOUNT_ID_NOT_PROVIDED = 2;
-    const ERROR_INVALID_JSON_ACCOUNT_DATA = 3;
+    const ERROR_BOTH_VIDEO_DATA_AND_VIDEO_ID_SUBMITTED = 3;
     const ERROR_NO_VIDEO_ID = 4;
     const ERROR_INVALID_FILE_TYPE = 5;
     const ERROR_VIDEO_DATA_AND_VIDEO_ID = 6;
@@ -68,6 +68,8 @@ class BCDIAPI
     const ERROR_INVALID_JSON_TEXT_TRACKS_DATA = 20;
     const ERROR_INVALID_PATH_FILES_DATA = 21;
     const ERROR_INVALID_PATH_TEXT_TRACKS = 22;
+    const ERROR_API_ERROR = 23;
+    const ERROR_INVALID_CALL = 24;
 
     protected $access_token = null;
     protected $account_data = null;
@@ -107,9 +109,9 @@ class BCDIAPI
     public function __construct($account_data = null)
     {
         $this->account_data = json_decode($account_data);
-        $this->account_id = $this->account_data->account_id;
-        $this->client_id = $this->account_data->client_id;
-        $this->client_secret = $this->account_data->client_secret;
+        $this->account_id = (isset($this->account_data->account_id))? $this->account_data->account_id : null;
+        $this->client_id = (isset($this->account_data->client_id))? $this->account_data->client_id : null;
+        $this->client_secret = (isset($this->account_data->client_secret))? $this->account_data->client_secret : null;
         $this->auth_string = $this->client_id.':'.$this->client_secret;
         $this->bit32 = ((string) '99999999999999' == (int) '99999999999999') ? false : true;
         $this->di_data = new stdClass();
@@ -135,6 +137,11 @@ class BCDIAPI
      */
     public function ingest_request($ingest_options)
     {
+        if (!isset($this->account_id)) {
+            throw new BCDIAPIAccountIdNotProvided($this, self::ERROR_ACCOUNT_ID_NOT_PROVIDED);
+        } else if (!isset($this->client_id) || !isset($this->client_secret)) {
+            throw new ERROR_CLIENT_CREDENTIALS_NOT_PROVIDED($this, self::ERROR_CLIENT_SECRET_NOT_PROVIDED);
+        }
         if (isset($ingest_options->video_options)) {
             $this->cms_data = $ingest_options->video_options;
             $this->is_new_video = true;
@@ -589,17 +596,20 @@ class BCDIAPI
             case self::ERROR_API_ERROR:
                 return 'API error';
                 break;
-            case self::ERROR_ACCOUNT_ID_NOT_PROVIDED:
-                return 'You must provide a valid Video Cloud account id';
+            case self::ERROR_INVALID_JSON_ACCOUNT_DATA:
+                return 'No valid JSON for account data was found';
                 break;
-            case self::ERROR_ID_NOT_PROVIDED:
-                return 'ID not provided';
+            case self::ERROR_ACCOUNT_ID_NOT_PROVIDED:
+                return 'Account data did not include an account_id';
+                break;
+            case self::ERROR_BOTH_VIDEO_DATA_AND_VIDEO_ID_SUBMITTED:
+                return 'Provideo video_data for new videos or video_id for replace and retranscode request - you may not submit both';
+                break;
+            case self::ERROR_NO_VIDEO_ID:
+                return 'video_id is required for replace and retranscode requests';
                 break;
             case self::ERROR_INVALID_FILE_TYPE:
-                return 'Unsupported file type';
-                break;
-            case self::ERROR_INVALID_JSON:
-                return 'Please check your input data to insure that all JSON strings are valid';
+                return 'The video type is not supported';
                 break;
             case self::ERROR_INVALID_PROPERTY:
                 return 'Requested property not found';
@@ -661,39 +671,27 @@ class BCDIAPIException extends Exception
     }
 }
 
-class BCDIAPIApiError extends BCDIAPIException
-{
-}
-class BCDIAPIDeprecated extends BCDIAPIException
-{
-}
-class BCDIAPIDtoDoesNotExist extends BCDIAPIException
-{
-}
-class BCDIAPIIdNotProvided extends BCDIAPIException
-{
-}
-class BCDIAPIInvalidFileType extends BCDIAPIException
-{
-}
-class BCDIAPIInvalidMethod extends BCDIAPIException
-{
-}
-class BCDIAPIInvalidProperty extends BCDIAPIException
-{
-}
-class BCDIAPIInvalidType extends BCDIAPIException
-{
-}
-class BCDIAPIInvalidUploadOption extends BCDIAPIException
-{
-}
-class BCDIAPISearchTermsNotProvided extends BCDIAPIException
-{
-}
-class BCDIAPITokenError extends BCDIAPIException
-{
-}
-class BCDIAPITransactionError extends BCDIAPIException
-{
-}
+class BCDIAPIInvalidJsonAccountData extends BCDIAPIException{}
+class BCDIAPIAccountIdNotProvided extends BCDIAPIException{}
+class BCDIAPIBothVideoDataAndVideoIdSubmitted extends BCDIAPIException{}
+class BCDIAPINoVideoId extends BCDIAPIException{}
+class BCDIAPIInvalidFileType extends BCDIAPIException{}
+class BCDIAPIVideoDataAndVideoId extends BCDIAPIException{}
+class BCDIAPIInvalidUploadOption extends BCDIAPIException{}
+class BCDIAPICmsApiRequestFailed extends BCDIAPIException{}
+class BCDIAPIDynamicIngestApiRequestFailed extends BCDIAPIException{}
+class BCDIAPIS3InformationApiRequestFailed extends BCDIAPIException{}
+class BCDIAPIClientCredentialsNotProvided extends BCDIAPIException{}
+class BCDIAPIWriteApiTransactionFailed extends BCDIAPIException{}
+class BCDIAPIClientSecretNotProvided extends BCDIAPIException{}
+class BCDIAPINoSrclangForTextTracks extends BCDIAPIException{}
+class BCDIAPISearchTermsNotProvided extends BCDIAPIException{}
+class BCDIAPIInvalidJsonVideoData extends BCDIAPIException{}
+class BCDIAPIInvalidJsonIngestData extends BCDIAPIException{}
+class BCDIAPIInvalidJsonFilesData extends BCDIAPIException{}
+class BCDIAPIInvalidJsonTextTracksData extends BCDIAPIException{}
+class BCDIAPIInvalidPathFilesData extends BCDIAPIException{}
+class BCDIAPIInvalidPathTextTracks extends BCDIAPIException{}
+class BCDIAPIApiError extends BCDIAPIException{}
+class BCDIInvalidCall extends BCDIAPIException{}
+?>
