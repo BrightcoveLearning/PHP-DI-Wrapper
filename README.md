@@ -48,7 +48,7 @@ ___
 
 This example shows how to instantiate, or start, the BCDIAPI PHP class. The argument, a JSON string, is required, and must take the form shown here. The recommended permissions for your credentials are:
 
-#### Sample code
+### Sample code
 
     <?php
 
@@ -105,11 +105,11 @@ Returns:
     * `putFiles` an array of responses from putting files to S3 (currently the objects are empty - a non-critical bug)
     * `di` the Dynamic Ingest API response
 
-##### Examples
+### Examples
 
 Note that the examples below assume the wrapper is already instantiated as `$bcdi`.
 
-###### **Ingest new video (pull-based)**
+#### **Ingest new video (pull-based)**
 
     // to ingest new video (pull-based)
     $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An original nature video","tags": ["nature","bird"]}';
@@ -123,7 +123,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($pull_options);
 
-###### **Ingest new video (upload source files)**
+#### **Ingest new video (upload source files)**
 
     // to ingest new video (upload source files)
     $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An // push ingest data
@@ -140,7 +140,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($push_options);
 
-###### **Replace video (pull-based)**
+#### **Replace video (pull-based)**
 
     // to replace video (pull-based)
     $video_id = '1234567890';
@@ -170,7 +170,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($push_options);
 
-###### **Retranscode video**
+#### **Retranscode video**
 
     // to ingest new video (pull-based)
     $video_id = '1234567890';
