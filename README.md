@@ -187,17 +187,6 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
 
 (*work-in-progress - not implemented yet!*)
 
-This example shows how to utilize the built-in error handling in BCDIAPI.
-
-    // Create a try/catch
-    try {
-        // Make our API call
-        $video = $bc->ingest_request($ingest_options);
-    } catch(Exception $error) {
-        // Handle our error
-        echo $error;
-        die();
-    }
 
 * * *
 
