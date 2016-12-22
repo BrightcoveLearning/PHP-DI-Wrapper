@@ -11,7 +11,7 @@ PHP version 5.4 or greater.
 ## Installation
 
 1. Download, clone, or fork this repository.
-2. Copy the **dist** folder to your local or remote web server - *note: for the wrapper to function properly, you must make a physical copy, not a symlink*
+2. Copy the **dist** folder to your local or remote web server - *note: for the wrapper to function properly, you may need to put a physical copy under the web document root, not a symlink. I have gotten it to work with a symlink copy, but can't guarantee that works generally/*
 
 ## Authentication
 
