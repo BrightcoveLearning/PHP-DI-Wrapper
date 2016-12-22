@@ -109,7 +109,7 @@ Returns:
 
 Note that the examples below assume the wrapper is already instantiated as `$bcdi`.
 
-###### Ingest new video (pull-based)
+###### **Ingest new video (pull-based)**
 
     // to ingest new video (pull-based)
     $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An original nature video","tags": ["nature","bird"]}';
@@ -123,7 +123,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($pull_options);
 
-###### Ingest new video (upload source files)
+###### **Ingest new video (upload source files)**
 
     // to ingest new video (upload source files)
     $video_metadata = '{"name":"Great Blue Heron - DI Wrapper test","description": "An // push ingest data
@@ -140,7 +140,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($push_options);
 
-###### Replace video (pull-based)
+###### **Replace video (pull-based)**
 
     // to replace video (pull-based)
     $video_id = '1234567890';
@@ -153,7 +153,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($push_options);
 
-###### Replace video (upload source files)
+###### **Replace video (upload source files)**
 
     // to replace video (upload source files)
     $video_id = '1234567890';
@@ -170,7 +170,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     // make a request
     $responses = $bcdi->ingest_request($push_options);
 
-###### Retranscode video
+###### **Retranscode video**
 
     // to ingest new video (pull-based)
     $video_id = '1234567890';
