@@ -4,9 +4,13 @@
 
 This project provides a starting point for integrating the Brightcove Dynamic Ingest API into your application. It provides simple ways to add and update videos and associated media using either pull-based ingest or source file upload.
 
+Error handling is not yet implemented.
+
+This code is offered as-is, and is not supported by Brightcove. If you can improve or add to this project, pull requests are welcome.
+
 ## Requirements
 
-PHP version 5.4 or greater.
+PHP version 5.4 or greater, including JSON and curl functionality. 
 
 ## Installation
 
