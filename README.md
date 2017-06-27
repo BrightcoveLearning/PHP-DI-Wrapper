@@ -182,7 +182,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
 
     $ingest_options = new stdClass();
     $ingest_options->video_id = $video_id;
-    $ingest_options->ingest_options = $push_ingest_data;
+    $ingest_options->ingest_options = $retranscode_data;
 
     // make a request
     $responses = $bcdi->ingest_request($ingest_options);
