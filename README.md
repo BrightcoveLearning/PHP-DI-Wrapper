@@ -155,7 +155,7 @@ Note that the examples below assume the wrapper is already instantiated as `$bcd
     $pull_options->ingest_options = $pull_ingest_data;
 
     // make a request
-    $responses = $bcdi->ingest_request($push_options);
+    $responses = $bcdi->ingest_request($pull_options);
 
 ###### **Replace video (upload source files)**
 
